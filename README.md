@@ -14,13 +14,11 @@ code dependency management, to ensure your code runs using the correct component
 
 ### Team Members
 
-*(fill the table below with the team members, and then delete this line)*
-
-| Number | Name              | User                               | Email                                       |
-|--------|-------------------|------------------------------------|---------------------------------------------|
-| 99210  | Diogo Antunes     | <https://github.com/diogoantunes25>| <mailto:diogo.santiago@tecnico.ulisboa.pt>  |
-| 99256  | Joao Rocha        | <https://github.com/Calhau18>      | <mailto:joao.t.f.rocha@tecnico.ulisboa.pt>  |
-| 99220  | Francisco Lopes   | <https://github.com/CharlieUser>   | <mailto:charlie@tecnico.ulisboa.pt>         |
+| Number | Name              | User                                    | Email                                         |
+|--------|-------------------|-----------------------------------------|-----------------------------------------------|
+| 99210  | Diogo Antunes     | <https://github.com/diogoantunes25>     | <mailto:diogo.santiago@tecnico.ulisboa.pt>    |
+| 99256  | Joao Rocha        | <https://github.com/Calhau18>           | <mailto:joao.t.f.rocha@tecnico.ulisboa.pt>    |
+| 99220  | Francisco Lopes   | <https://github.com/franciscolopes22>   | <mailto:francisco.a.lopes@tecnico.ulisboa.pt> |
 
 ## Getting Started
 
