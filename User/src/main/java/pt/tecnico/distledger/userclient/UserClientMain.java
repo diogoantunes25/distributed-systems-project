@@ -23,8 +23,9 @@ public class UserClientMain {
 
         final String host = args[0];
         final int port = Integer.parseInt(args[1]);
+        final String target = host + ":" + port;
 
-        CommandParser parser = new CommandParser(new UserService());
+        CommandParser parser = new CommandParser(new UserService(target));
         parser.parseInput();
 
     }
