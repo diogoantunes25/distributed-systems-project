@@ -15,6 +15,7 @@ public class CommandParser {
     private static final String EXIT = "exit";
 
     private final AdminService adminService;
+
     public CommandParser(AdminService adminService) {
         this.adminService = adminService;
     }
@@ -58,6 +59,9 @@ public class CommandParser {
             }
 
         }
+
+        scanner.close();
+        this.adminService.delete();
     }
 
     private void activate(String line){
@@ -69,7 +73,7 @@ public class CommandParser {
         }
         String server = split[1];
 
-        System.out.println("TODO: implement activate command");
+        this.adminService.activate(server);
     }
 
     private void deactivate(String line){
@@ -81,7 +85,7 @@ public class CommandParser {
         }
         String server = split[1];
 
-        System.out.println("TODO: implement deactivate command");
+        this.adminService.deactivate(server);
     }
 
     private void dump(String line){
@@ -93,7 +97,7 @@ public class CommandParser {
         }
         String server = split[1];
 
-        System.out.println("TODO: implement getLedgerState command");
+        this.adminService.getLedgerState(server);
     }
 
     @SuppressWarnings("unused")
