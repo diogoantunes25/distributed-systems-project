@@ -6,6 +6,8 @@ import java.util.Scanner;
 
 public class CommandParser {
 
+    private boolean DEBUG_FLAG;
+
     private static final String SPACE = " ";
     private static final String CREATE_ACCOUNT = "createAccount";
     private static final String DELETE_ACCOUNT = "deleteAccount";
@@ -20,6 +22,15 @@ public class CommandParser {
         this.userService = userService;
     }
 
+    public void setDebug(boolean debug) {
+        this.DEBUG_FLAG = debug;
+    }
+
+    private void debug(String debugMessage) {
+		if (DEBUG_FLAG)
+			System.err.println(debugMessage);
+	}
+
     void parseInput() {
 
         Scanner scanner = new Scanner(System.in);
@@ -31,6 +42,7 @@ public class CommandParser {
             String cmd = line.split(SPACE)[0];
 
             try{
+                debug("Command: " + cmd);
                 switch (cmd) {
                     case CREATE_ACCOUNT:
                         this.createAccount(line);
@@ -59,8 +71,8 @@ public class CommandParser {
                     default:
                         break;
                 }
-            }
-            catch (Exception e){
+                
+            } catch (Exception e){
                 System.err.println(e.getMessage());
             }
         }
@@ -80,6 +92,9 @@ public class CommandParser {
         String server = split[1];
         String username = split[2];
 
+        debug("Server: " + server);
+        debug("Username: " + username);
+
         this.userService.createAccount(server, username);
     }
 
@@ -92,6 +107,9 @@ public class CommandParser {
         }
         String server = split[1];
         String username = split[2];
+
+        debug("Server: " + server);
+        debug("Username: " + username);
 
         this.userService.deleteAccount(server, username);
     }
@@ -107,6 +125,9 @@ public class CommandParser {
         String server = split[1];
         String username = split[2];
 
+        debug("Server: " + server);
+        debug("Username: " + username);
+
         this.userService.balance(server, username);
     }
 
@@ -121,6 +142,11 @@ public class CommandParser {
         String from = split[2];
         String dest = split[3];
         Integer amount = Integer.valueOf(split[4]);
+
+        debug("Server: " + server);
+        debug("Username: " + from);
+        debug("Destination: " + dest);
+        debug("Amount: " + amount);
 
         this.userService.transferTo(server, from, dest, amount);
     }

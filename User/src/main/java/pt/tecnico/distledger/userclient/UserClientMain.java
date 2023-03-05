@@ -35,6 +35,7 @@ public class UserClientMain {
         debug("target = " + target);
 
         CommandParser parser = new CommandParser(new UserService(target));
+        parser.setDebug(DEBUG_FLAG);
         parser.parseInput();
 
     }

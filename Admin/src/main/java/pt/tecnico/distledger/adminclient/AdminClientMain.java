@@ -34,6 +34,7 @@ public class AdminClientMain {
         debug("target = " + target);
 
         CommandParser parser = new CommandParser(new AdminService(target));
+        parser.setDebug(DEBUG_FLAG);
         parser.parseInput();
 
     }
