@@ -21,6 +21,7 @@ public class AdminService {
                 AdminDistLedger.ActivateRequest.newBuilder().build();
             AdminDistLedger.ActivateResponse response = stub.activate(request);
 
+            System.out.println("OK");
             System.out.println(response);
         } catch (Exception e) {
             System.err.println(e.getMessage());
@@ -33,6 +34,7 @@ public class AdminService {
                 AdminDistLedger.DeactivateRequest.newBuilder().build();
             AdminDistLedger.DeactivateResponse response = stub.deactivate(request);
 
+            System.out.println("OK");
             System.out.println(response);
         } catch (Exception e) {
             System.err.println(e.getMessage());
@@ -45,6 +47,7 @@ public class AdminService {
                 AdminDistLedger.getLedgerStateRequest.newBuilder().build();
             AdminDistLedger.getLedgerStateResponse response = stub.getLedgerState(request);
 
+            System.out.println("OK");
             System.out.println(response);
         } catch (Exception e) {
             System.err.println(e.getMessage());

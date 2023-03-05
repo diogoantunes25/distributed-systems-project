@@ -21,6 +21,7 @@ public class UserService {
                 UserDistLedger.CreateAccountRequest.newBuilder().setUserId(username).build();
             UserDistLedger.CreateAccountResponse response = stub.createAccount(request);
 
+            System.out.println("OK");
             System.out.println(response);
         } catch (Exception e) {
             System.err.println(e.getMessage());
@@ -33,6 +34,7 @@ public class UserService {
                 UserDistLedger.DeleteAccountRequest.newBuilder().setUserId(username).build();
             UserDistLedger.DeleteAccountResponse response = stub.deleteAccount(request);
 
+            System.out.println("OK");
             System.out.println(response);
         } catch (Exception e) {
             System.err.println(e.getMessage());
@@ -45,6 +47,7 @@ public class UserService {
                 UserDistLedger.BalanceRequest.newBuilder().setUserId(username).build();
             UserDistLedger.BalanceResponse response = stub.balance(request);
 
+            System.out.println("OK");
             System.out.println(response);
         } catch (Exception e) {
             System.err.println(e.getMessage());
@@ -58,6 +61,7 @@ public class UserService {
                 .setAccountFrom(username).setAccountTo(dest).setAmount(amount).build();
             UserDistLedger.TransferToResponse response = stub.transferTo(request);
             
+            System.out.println("OK");
             System.out.println(response);
         } catch (Exception e) {
             System.err.println(e.getMessage());
