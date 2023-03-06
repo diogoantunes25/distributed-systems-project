@@ -62,7 +62,7 @@ public class ServerState {
         ledger.add(new DeleteOp(userId));
     }
 
-    public void transferTo(String accountFrom, String accoutTo, int amount)
+    public void transferTo(String accountFrom, String accountTo, int amount)
         throws AccountDoesNotExistException, NotEnoughBalanceException, ServerUnavailableException {
         if (!active) {
             throw new ServerUnavailableException();
@@ -72,16 +72,12 @@ public class ServerState {
             throw new AccountDoesNotExistException(accountFrom);
         }
 
-        Account from = accounts.get(accountFrom);
-
-        if (!accounts.containsKey(accoutTo)) {
-            throw new AccountDoesNotExistException(accoutTo);
+        if (!accounts.containsKey(accountTo)) {
+            throw new AccountDoesNotExistException(accountTo);
         }
 
-        Account to = accounts.get(accountFrom);
-
-        from.decreaseBalance(amount);
-        to.increaseBalance(amount);
+        accounts.get(accountFrom).decreaseBalance(amount);
+        accounts.get(accountTo).increaseBalance(amount);
         ledger.add(new TransferOp(accountFrom, accountFrom, amount));
     }
 
@@ -96,6 +92,10 @@ public class ServerState {
         }
 
         return accounts.get(userId).getBalance();
+    }
+
+    public Map<String, Account> getAccounts() {
+        return accounts;
     }
 
     public void activate() {

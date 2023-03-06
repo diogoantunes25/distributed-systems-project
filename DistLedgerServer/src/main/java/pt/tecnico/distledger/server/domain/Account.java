@@ -7,8 +7,7 @@ public class Account {
     private String userId;
 
     private static final int TOTAL_COIN = 1000;
-    private static final String BROKER_ID = "__BROKER__";
-    private static final Account broker = new Account(BROKER_ID, TOTAL_COIN);
+    public static final String BROKER_ID = "__BROKER__";
 
     private Account(String userId, int initialBalance) {
         this.userId = userId;
@@ -20,7 +19,7 @@ public class Account {
     }
 
     public static Account getBroker() {
-        return broker;
+        return new Account(BROKER_ID, TOTAL_COIN);
     }
 
     public void increaseBalance(int amount) {
@@ -29,7 +28,8 @@ public class Account {
 
     public void decreaseBalance(int amount) throws NotEnoughBalanceException {
         if (amount <= balance) {
-
+            this.balance -= amount;
+            return;
         }
         throw new NotEnoughBalanceException(balance, amount);
     }
