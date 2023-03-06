@@ -4,13 +4,17 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
+
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.BeforeEach;
 
 import pt.tecnico.distledger.server.domain.exceptions.AccountDoesNotExistException;
 import pt.tecnico.distledger.server.domain.exceptions.BalanceNotZeroException;
+import pt.tecnico.distledger.server.domain.exceptions.BrokerCannotBeDeletedException;
 import pt.tecnico.distledger.server.domain.exceptions.DistLedgerException;
 import pt.tecnico.distledger.server.domain.exceptions.NotEnoughBalanceException;
 import pt.tecnico.distledger.server.domain.exceptions.ServerUnavailableException;
@@ -67,6 +71,7 @@ public class ServerStateTest {
 
 		serverState.deleteAccount(USER_1);
 		serverState.deleteAccount(USER_2);
+		assertThrows(BrokerCannotBeDeletedException.class, () -> serverState.deleteAccount(Account.BROKER_ID));
 	}
 
 	@Test
@@ -95,4 +100,134 @@ public class ServerStateTest {
 		List<Operation> ledger = serverState.getLedgerState();
 		assertEquals(9, ledger.size());
 	}
+
+	@Test
+	public void testCreateAccountConcurrency() throws InterruptedException {
+
+		int threadCount = 50;
+		int accountNumber = 5000;
+		
+		CountDownLatch latch = new CountDownLatch(threadCount);
+
+		List<Thread> threads = new ArrayList<>();
+
+		// Setup threads
+		for (int i = 0; i < threadCount; i++) {
+			threads.add(new Thread(() -> {
+				for (int j = 0; j < accountNumber; j++) {
+					try {
+						serverState.createAccount(String.format("USER %s", j));
+					} catch (DistLedgerException e) {
+						// ignore
+					}
+				}		
+				latch.countDown();
+			}));
+		}
+
+		// Start all threads
+		for (Thread t: threads) t.start();
+
+		latch.await();
+
+		assertEquals(accountNumber + 1, serverState.getAccounts().size());
+	}
+
+	@Test
+	public void testTransferConcurrency() throws InterruptedException, DistLedgerException {
+
+		int threadCount = 50;
+		int accountCount = 50;
+		int transactionPerAccount = 500;
+
+		CountDownLatch latch = new CountDownLatch(threadCount);
+		List<Thread> threads = new ArrayList<>();
+
+		// Create accounts
+		for (int i = 0; i < accountCount; i++) {
+			serverState.createAccount("user_" + i);
+		}
+
+		// Setup threads
+		for (int i = 0; i < threadCount; i++) {
+			final int j = i;
+			threads.add(new Thread(() -> {
+				// Pick some account
+				String userId = "user_" + (j % accountCount);
+
+				for (int k = 0; k < transactionPerAccount; k++) {
+					try {
+						serverState.transferTo(Account.BROKER_ID, userId, 1);
+					} catch (DistLedgerException e) {
+						// ignore
+					}
+				}
+
+				latch.countDown();
+			}));
+		}
+
+		// Start all threads
+		for (Thread t: threads) t.start();
+
+		latch.await();
+
+		int totalCurrency = serverState
+			.getAccounts()
+			.keySet()
+			.stream()
+			.mapToInt((String userId) -> {
+				try {
+					return serverState.getBalance(userId);
+				} catch (DistLedgerException e) {
+					// ignore
+				}
+				return 0;
+			})
+			.sum();
+
+		assertEquals(Account.TOTAL_COIN, totalCurrency);
+	}
+
+	@Test
+	public void testDeleteConcurrency() throws InterruptedException, DistLedgerException {
+
+		int threadCount = 50;
+		int accountCount = 5000;
+
+		CountDownLatch latch = new CountDownLatch(threadCount);
+		List<Thread> threads = new ArrayList<>();
+
+		// Create accounts
+		for (int i = 0; i < accountCount; i++) {
+			serverState.createAccount("user_" + i);
+		}
+
+		assertEquals(accountCount + 1, serverState.getAccounts().size());
+
+		// Setup threads
+		for (int i = 0; i < threadCount; i++) {
+			threads.add(new Thread(() -> {
+				// Pick some account
+				for (int j = 0; j < accountCount; j++) {
+					String userId = "user_" + j;
+					try {
+						serverState.deleteAccount(userId);
+					} catch (DistLedgerException e) {
+						// ignore
+					}
+				}
+
+				latch.countDown();
+			}));
+		}
+
+		// Start all threads
+		for (Thread t: threads) t.start();
+
+		latch.await();
+
+		assertEquals(1, serverState.getAccounts().size());
+	}
+
 }
