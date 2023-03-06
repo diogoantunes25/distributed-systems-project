@@ -7,7 +7,8 @@ public class Account {
     private String userId;
 
     private static final int TOTAL_COIN = 1000;
-    private static final Account broker = new Account("__BROKER__", TOTAL_COIN);
+    private static final String BROKER_ID = "__BROKER__";
+    private static final Account broker = new Account(BROKER_ID, TOTAL_COIN);
 
     private Account(String userId, int initialBalance) {
         this.userId = userId;
@@ -35,6 +36,10 @@ public class Account {
 
     public int getBalance() {
         return balance;
+    }
+
+    public String getUserId() {
+        return userId;
     }
 
     @Override
