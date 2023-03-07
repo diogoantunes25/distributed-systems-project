@@ -3,14 +3,22 @@ package pt.tecnico.distledger.adminclient;
 import pt.tecnico.distledger.adminclient.grpc.AdminService;
 
 public class AdminClientMain {
+
+    private static final boolean DEBUG_FLAG = (System.getProperty("debug") != null);
+
+    private static void debug(String debugMessage) {
+		if (DEBUG_FLAG)
+			System.err.println(debugMessage);
+	}
+    
     public static void main(String[] args) {
 
         System.out.println(AdminClientMain.class.getSimpleName());
 
         // receive and print arguments
-        System.out.printf("Received %d arguments%n", args.length);
+        debug(String.format("Received %d arguments%n", args.length));
         for (int i = 0; i < args.length; i++) {
-            System.out.printf("arg[%d] = %s%n", i, args[i]);
+            debug(String.format("arg[%d] = %s%n", i, args[i]));
         }
 
         // check arguments
@@ -22,8 +30,11 @@ public class AdminClientMain {
 
         final String host = args[0];
         final int port = Integer.parseInt(args[1]);
+        final String target = host + ":" + port;
+        debug("target = " + target);
 
-        CommandParser parser = new CommandParser(new AdminService());
+        CommandParser parser = new CommandParser(new AdminService(target));
+        parser.setDebug(DEBUG_FLAG);
         parser.parseInput();
 
     }

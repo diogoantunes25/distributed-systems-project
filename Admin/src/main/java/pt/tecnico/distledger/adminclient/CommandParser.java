@@ -6,6 +6,8 @@ import java.util.Scanner;
 
 public class CommandParser {
 
+    private boolean DEBUG_FLAG;
+
     private static final String SPACE = " ";
     private static final String ACTIVATE = "activate";
     private static final String DEACTIVATE = "deactivate";
@@ -15,9 +17,20 @@ public class CommandParser {
     private static final String EXIT = "exit";
 
     private final AdminService adminService;
+
     public CommandParser(AdminService adminService) {
         this.adminService = adminService;
     }
+
+    public void setDebug(boolean debug) {
+        this.DEBUG_FLAG = debug;
+    }
+
+    private void debug(String debugMessage) {
+		if (DEBUG_FLAG)
+			System.err.println(debugMessage);
+	}
+
     void parseInput() {
 
         Scanner scanner = new Scanner(System.in);
@@ -28,36 +41,45 @@ public class CommandParser {
             String line = scanner.nextLine().trim();
             String cmd = line.split(SPACE)[0];
 
-            switch (cmd) {
-                case ACTIVATE:
-                    this.activate(line);
-                    break;
+            try{
+                debug("Command: " + cmd);
+                switch (cmd) {
+                    case ACTIVATE:
+                        this.activate(line);
+                        break;
 
-                case DEACTIVATE:
-                    this.deactivate(line);
-                    break;
+                    case DEACTIVATE:
+                        this.deactivate(line);
+                        break;
 
-                case GET_LEDGER_STATE:
-                    this.dump(line);
-                    break;
+                    case GET_LEDGER_STATE:
+                        this.dump(line);
+                        break;
 
-                case GOSSIP:
-                    this.gossip(line);
-                    break;
+                    case GOSSIP:
+                        this.gossip(line);
+                        break;
 
-                case HELP:
-                    this.printUsage();
-                    break;
+                    case HELP:
+                        this.printUsage();
+                        break;
 
-                case EXIT:
-                    exit = true;
-                    break;
+                    case EXIT:
+                        exit = true;
+                        break;
 
-                default:
-                    break;
+                    default:
+                        break;
+                }
+
+            } catch (Exception e) {
+                System.err.println(e.getMessage());
             }
 
         }
+
+        scanner.close();
+        this.adminService.delete();
     }
 
     private void activate(String line){
@@ -69,7 +91,9 @@ public class CommandParser {
         }
         String server = split[1];
 
-        System.out.println("TODO: implement activate command");
+        debug("Server: " + server);
+
+        this.adminService.activate(server);
     }
 
     private void deactivate(String line){
@@ -81,7 +105,9 @@ public class CommandParser {
         }
         String server = split[1];
 
-        System.out.println("TODO: implement deactivate command");
+        debug("Server: " + server);
+
+        this.adminService.deactivate(server);
     }
 
     private void dump(String line){
@@ -93,7 +119,9 @@ public class CommandParser {
         }
         String server = split[1];
 
-        System.out.println("TODO: implement getLedgerState command");
+        debug("Server: " + server);
+
+        this.adminService.getLedgerState(server);
     }
 
     @SuppressWarnings("unused")

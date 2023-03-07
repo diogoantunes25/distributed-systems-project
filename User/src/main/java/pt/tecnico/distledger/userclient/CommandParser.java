@@ -2,9 +2,13 @@ package pt.tecnico.distledger.userclient;
 
 import pt.tecnico.distledger.userclient.grpc.UserService;
 
+import java.util.logging.Logger;
+import java.util.logging.Level;
 import java.util.Scanner;
 
 public class CommandParser {
+
+    private static final Logger logger = Logger.getLogger(CommandParser.class.getName());
 
     private static final String SPACE = " ";
     private static final String CREATE_ACCOUNT = "createAccount";
@@ -20,6 +24,10 @@ public class CommandParser {
         this.userService = userService;
     }
 
+    public void setDebug(boolean debug) {
+        logger.setLevel(debug ? Level.INFO : Level.WARNING);
+    }
+
     void parseInput() {
 
         Scanner scanner = new Scanner(System.in);
@@ -31,6 +39,7 @@ public class CommandParser {
             String cmd = line.split(SPACE)[0];
 
             try{
+                logger.info("Command: " + cmd);
                 switch (cmd) {
                     case CREATE_ACCOUNT:
                         this.createAccount(line);
@@ -59,11 +68,14 @@ public class CommandParser {
                     default:
                         break;
                 }
-            }
-            catch (Exception e){
+                
+            } catch (Exception e){
                 System.err.println(e.getMessage());
             }
         }
+
+        scanner.close();
+        this.userService.delete();
     }
 
     private void createAccount(String line){
@@ -77,7 +89,10 @@ public class CommandParser {
         String server = split[1];
         String username = split[2];
 
-        System.out.println("TODO: implement createAccount command");
+        logger.info("Server: " + server);
+        logger.info("Username: " + username);
+
+        this.userService.createAccount(server, username);
     }
 
     private void deleteAccount(String line){
@@ -90,7 +105,10 @@ public class CommandParser {
         String server = split[1];
         String username = split[2];
 
-        System.out.println("TODO: implement deleteAccount command");
+        logger.info("Server: " + server);
+        logger.info("Username: " + username);
+
+        this.userService.deleteAccount(server, username);
     }
 
 
@@ -104,7 +122,10 @@ public class CommandParser {
         String server = split[1];
         String username = split[2];
 
-        System.out.println("TODO: implement balance command");
+        logger.info("Server: " + server);
+        logger.info("Username: " + username);
+
+        this.userService.balance(server, username);
     }
 
     private void transferTo(String line){
@@ -119,7 +140,12 @@ public class CommandParser {
         String dest = split[3];
         Integer amount = Integer.valueOf(split[4]);
 
-        System.out.println("TODO: implement transferTo command");
+        logger.info("Server: " + server);
+        logger.info("Username: " + from);
+        logger.info("Destination: " + dest);
+        logger.info("Amount: " + amount);
+
+        this.userService.transferTo(server, from, dest, amount);
     }
 
     private void printUsage() {
