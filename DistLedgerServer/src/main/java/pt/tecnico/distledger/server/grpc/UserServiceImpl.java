@@ -15,39 +15,72 @@ public class UserServiceImpl extends UserServiceGrpc.UserServiceImplBase {
     @Override
     public void createAccount(CreateAccountRequest request, StreamObserver<CreateAccountResponse> responseObserver) {
         
-        String userID = request.getUserId();
-        state.createAccount(userID);
-        CreateAccountResponse response = CreateAccountResponse.newBuilder().build();
-        responseObserver.onNext(response);
-        responseObserver.onCompleted();
+        try {
+            String userID = request.getUserId();
+            state.createAccount(userID);
+
+            CreateAccountResponse response = CreateAccountResponse.newBuilder().build();
+            responseObserver.onNext(response);
+            responseObserver.onCompleted();
+            
+        } catch (ExceptionAccountAlreadyExistsException | ServerUnavailableException e) {
+            System.err.println(e.getMessage());
+            responseObserver.onError(e);
+        }
     }
 
     @Override
     public void deleteAccount(DeleteAccountRequest request, StreamObserver<DeleteAccountResponse> responseObserver) {
-        String userID = request.getUserId();
-        state.deleteAccount(userID);
-        DeleteAccountResponse response = DeleteAccountResponse.newBuilder().build();
-        responseObserver.onNext(response);
-        responseObserver.onCompleted();
+
+        try {
+            String userID = request.getUserId();
+            state.deleteAccount(userID);
+
+            DeleteAccountResponse response = DeleteAccountResponse.newBuilder().build();
+            responseObserver.onNext(response);
+            responseObserver.onCompleted();
+
+        } catch (AccountDoesNotExistException | BalanceNotZeroException | ServerUnavailableException | BrokerCannotBeDeletedException e) {
+            System.err.println(e.getMessage());
+            responseObserver.onError(e);
+        }
     }
     
     @Override
     public void balance(BalanceRequest request, StreamObserver<BalanceResponse> responseObserver) {
-        String userID = request.getUserId();
-        BalanceResponse response = BalanceResponse.newBuilder().setValue(state.getBalance(userID)).build();
-        responseObserver.onNext(response);
-        responseObserver.onCompleted();
+
+        try {
+            String userID = request.getUserId();
+            Integer balance = state.getBalance(userID);
+
+            BalanceResponse response = BalanceResponse.newBuilder().setValue(balance).build();
+            responseObserver.onNext(response);
+            responseObserver.onCompleted();
+
+        } catch (AccountDoesNotExistException | ServerUnavailableException e) {
+            System.err.println(e.getMessage());
+            responseObserver.onError(e);
+        }
+
     }
 
     @Override
     public void transferTo(TransferToRequest request, StreamObserver<TransferToResponse> responseObserver) {
-        String userID = request.getAccountFrom();
-        String dest = request.getAccountTo();
-        Integer amount = request.getAmount();
-        state.transferTo(userID, dest, amount);
-        TransferToResponse response = TransferToResponse.newBuilder().build();
-        responseObserver.onNext(response);
-        responseObserver.onCompleted();
+
+        try {
+            String userID = request.getAccountFrom();
+            String dest = request.getAccountTo();
+            Integer amount = request.getAmount();
+
+            state.transferTo(userID, dest, amount);
+            TransferToResponse response = TransferToResponse.newBuilder().build();
+            responseObserver.onNext(response);
+            responseObserver.onCompleted();
+
+        } catch (AccountDoesNotExistException | NotEnoughBalanceException | ServerUnavailableException e) {
+            System.err.println(e.getMessage());
+            responseObserver.onError(e);
+        }
     }
 
     
