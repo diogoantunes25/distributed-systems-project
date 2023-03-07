@@ -2,11 +2,13 @@ package pt.tecnico.distledger.userclient;
 
 import pt.tecnico.distledger.userclient.grpc.UserService;
 
+import java.util.logging.Logger;
+import java.util.logging.Level;
 import java.util.Scanner;
 
 public class CommandParser {
 
-    private boolean DEBUG_FLAG;
+    private static final Logger logger = Logger.getLogger(CommandParser.class.getName());
 
     private static final String SPACE = " ";
     private static final String CREATE_ACCOUNT = "createAccount";
@@ -23,13 +25,8 @@ public class CommandParser {
     }
 
     public void setDebug(boolean debug) {
-        this.DEBUG_FLAG = debug;
+        logger.setLevel(debug ? Level.INFO : Level.WARNING);
     }
-
-    private void debug(String debugMessage) {
-		if (DEBUG_FLAG)
-			System.err.println(debugMessage);
-	}
 
     void parseInput() {
 
@@ -42,7 +39,7 @@ public class CommandParser {
             String cmd = line.split(SPACE)[0];
 
             try{
-                debug("Command: " + cmd);
+                logger.info("Command: " + cmd);
                 switch (cmd) {
                     case CREATE_ACCOUNT:
                         this.createAccount(line);
@@ -92,8 +89,8 @@ public class CommandParser {
         String server = split[1];
         String username = split[2];
 
-        debug("Server: " + server);
-        debug("Username: " + username);
+        logger.info("Server: " + server);
+        logger.info("Username: " + username);
 
         this.userService.createAccount(server, username);
     }
@@ -108,8 +105,8 @@ public class CommandParser {
         String server = split[1];
         String username = split[2];
 
-        debug("Server: " + server);
-        debug("Username: " + username);
+        logger.info("Server: " + server);
+        logger.info("Username: " + username);
 
         this.userService.deleteAccount(server, username);
     }
@@ -125,8 +122,8 @@ public class CommandParser {
         String server = split[1];
         String username = split[2];
 
-        debug("Server: " + server);
-        debug("Username: " + username);
+        logger.info("Server: " + server);
+        logger.info("Username: " + username);
 
         this.userService.balance(server, username);
     }
@@ -143,10 +140,10 @@ public class CommandParser {
         String dest = split[3];
         Integer amount = Integer.valueOf(split[4]);
 
-        debug("Server: " + server);
-        debug("Username: " + from);
-        debug("Destination: " + dest);
-        debug("Amount: " + amount);
+        logger.info("Server: " + server);
+        logger.info("Username: " + from);
+        logger.info("Destination: " + dest);
+        logger.info("Amount: " + amount);
 
         this.userService.transferTo(server, from, dest, amount);
     }
