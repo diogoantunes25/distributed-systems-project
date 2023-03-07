@@ -28,7 +28,7 @@ public class AdminServiceImpl extends AdminServiceGrpc.AdminServiceImplBase{
 
     @Override
     public void gossip(GossipRequest request, StreamObserver<GossipResponse> responseObserver) {
-        state.gossip();
+        // state.gossip();
         GossipResponse response = GossipResponse.newBuilder().build();
         responseObserver.onNext(response);
         responseObserver.onCompleted();
