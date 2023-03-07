@@ -35,7 +35,7 @@ public class UserServiceImpl extends UserServiceGrpc.UserServiceImplBase {
 
         } catch (ExceptionAccountAlreadyExistsException e) {
             System.err.println(ACCOUNT_ALREADY_EXISTS);
-            responseObserver.onError(Status.INVALID_ARGUMENT.withDescription(ACCOUNT_ALREADY_EXISTS).asRuntimeException());
+            responseObserver.onError(Status.ALREADY_EXISTS.withDescription(ACCOUNT_ALREADY_EXISTS).asRuntimeException());
 
         } catch (ServerUnavailableException e) {
             System.err.println(SERVER_UNAVAILABLE);
@@ -56,11 +56,11 @@ public class UserServiceImpl extends UserServiceGrpc.UserServiceImplBase {
 
         } catch (AccountDoesNotExistException e) {
             System.err.println(ACCOUNT_DOES_NOT_EXIST);
-            responseObserver.onError(Status.INVALID_ARGUMENT.withDescription(ACCOUNT_DOES_NOT_EXIST).asRuntimeException());
+            responseObserver.onError(Status.NOT_FOUND.withDescription(ACCOUNT_DOES_NOT_EXIST).asRuntimeException());
 
         } catch (BalanceNotZeroException e) {
             System.err.println(BALANCE_NOT_ZERO);
-            responseObserver.onError(Status.UNKNOWN.withDescription(BALANCE_NOT_ZERO).asRuntimeException());
+            responseObserver.onError(Status.FAILED_PRECONDITION.withDescription(BALANCE_NOT_ZERO).asRuntimeException());
 
         } catch (BrokerCannotBeDeletedException e) {
             System.err.println(BROKER_CANNOT_BE_DELETED);
@@ -85,7 +85,7 @@ public class UserServiceImpl extends UserServiceGrpc.UserServiceImplBase {
 
         } catch (AccountDoesNotExistException e) {
             System.err.println(ACCOUNT_DOES_NOT_EXIST);
-            responseObserver.onError(Status.INVALID_ARGUMENT.withDescription(ACCOUNT_DOES_NOT_EXIST).asRuntimeException());
+            responseObserver.onError(Status.NOT_FOUND.withDescription(ACCOUNT_DOES_NOT_EXIST).asRuntimeException());
 
         } catch (ServerUnavailableException e) {
             System.err.println(SERVER_UNAVAILABLE);
@@ -109,11 +109,11 @@ public class UserServiceImpl extends UserServiceGrpc.UserServiceImplBase {
 
         } catch (AccountDoesNotExistException e) {
             System.err.println(ACCOUNT_DOES_NOT_EXIST);
-            responseObserver.onError(Status.INVALID_ARGUMENT.withDescription(ACCOUNT_DOES_NOT_EXIST).asRuntimeException());
+            responseObserver.onError(Status.NOT_FOUND.withDescription(ACCOUNT_DOES_NOT_EXIST).asRuntimeException());
 
         } catch (NotEnoughBalanceException e) {
             System.err.println(NOT_ENOUGH_BALANCE);
-            responseObserver.onError(Status.INVALID_ARGUMENT.withDescription(NOT_ENOUGH_BALANCE).asRuntimeException());
+            responseObserver.onError(Status.FAILED_PRECONDITION.withDescription(NOT_ENOUGH_BALANCE).asRuntimeException());
 
         } catch (ServerUnavailableException e) {
             System.err.println(SERVER_UNAVAILABLE);
