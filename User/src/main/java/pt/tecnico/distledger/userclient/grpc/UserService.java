@@ -2,7 +2,7 @@ package pt.tecnico.distledger.userclient.grpc;
 
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
-
+import io.grpc.StatusRuntimeException;
 import pt.ulisboa.tecnico.distledger.contract.user.UserServiceGrpc;
 import pt.ulisboa.tecnico.distledger.contract.user.UserDistLedger;
 
@@ -23,7 +23,8 @@ public class UserService {
 
             System.out.println("OK");
             System.out.println(response);
-        } catch (Exception e) {
+        } catch (StatusRuntimeException e) {
+            System.out.println(e.getStatus().getDescription());
             System.err.println(e.getMessage());
         }
     }
@@ -36,7 +37,8 @@ public class UserService {
 
             System.out.println("OK");
             System.out.println(response);
-        } catch (Exception e) {
+        } catch (StatusRuntimeException e) {
+            System.out.println(e.getStatus().getDescription());
             System.err.println(e.getMessage());
         }
     }
@@ -49,7 +51,8 @@ public class UserService {
 
             System.out.println("OK");
             System.out.println(response);
-        } catch (Exception e) {
+        } catch (StatusRuntimeException e) {
+            System.out.println(e.getStatus().getDescription());
             System.err.println(e.getMessage());
         }
     }
@@ -63,7 +66,8 @@ public class UserService {
             
             System.out.println("OK");
             System.out.println(response);
-        } catch (Exception e) {
+        } catch (StatusRuntimeException e) {
+            System.out.println(e.getStatus().getDescription());
             System.err.println(e.getMessage());
         }
     }
