@@ -1,11 +1,6 @@
 package pt.tecnico.distledger.server.domain;
 
-import pt.tecnico.distledger.server.domain.exceptions.AccountAlreadyExistsException;
-import pt.tecnico.distledger.server.domain.exceptions.AccountDoesNotExistException;
-import pt.tecnico.distledger.server.domain.exceptions.BalanceNotZeroException;
-import pt.tecnico.distledger.server.domain.exceptions.BrokerCannotBeDeletedException;
-import pt.tecnico.distledger.server.domain.exceptions.NotEnoughBalanceException;
-import pt.tecnico.distledger.server.domain.exceptions.ServerUnavailableException;
+import pt.tecnico.distledger.server.domain.exceptions.*;
 import pt.tecnico.distledger.server.domain.operation.CreateOp;
 import pt.tecnico.distledger.server.domain.operation.DeleteOp;
 import pt.tecnico.distledger.server.domain.operation.Operation;
@@ -70,7 +65,8 @@ public class ServerState {
     }
 
     public synchronized void transferTo(String accountFrom, String accountTo, int amount)
-        throws AccountDoesNotExistException, NotEnoughBalanceException, ServerUnavailableException {
+        throws AccountDoesNotExistException, NotEnoughBalanceException, ServerUnavailableException,
+                InvalidTransferAmountException {
         if (!active.get()) {
             throw new ServerUnavailableException();
         }
@@ -82,6 +78,10 @@ public class ServerState {
         if (!accounts.containsKey(accountTo)) {
             throw new AccountDoesNotExistException(accountTo);
         }
+
+		if (amount <= 0) {
+            throw new InvalidTransferAmountException(amount);
+		}
 
         accounts.get(accountFrom).decreaseBalance(amount);
         accounts.get(accountTo).increaseBalance(amount);
