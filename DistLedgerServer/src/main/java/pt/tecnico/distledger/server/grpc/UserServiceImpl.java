@@ -13,7 +13,7 @@ import pt.ulisboa.tecnico.distledger.contract.user.UserServiceGrpc;
 
 public class UserServiceImpl extends UserServiceGrpc.UserServiceImplBase {
 
-    ServerState state = new ServerState();
+    private ServerState state;
 
     final String ACCOUNT_ALREADY_EXISTS = "This Account Already Exists";
     final String ACCOUNT_DOES_NOT_EXIST = "This Account Does Not Exist";
@@ -23,6 +23,9 @@ public class UserServiceImpl extends UserServiceGrpc.UserServiceImplBase {
     final String SERVER_UNAVAILABLE = "Server Unavailable";
     final String INVALID_TRANSFER_AMOUNT = "Amount to transfer must positive";
 
+    public UserServiceImpl(ServerState state) {
+        this.state = state;
+    }
 
     @Override
     public void createAccount(CreateAccountRequest request, StreamObserver<CreateAccountResponse> responseObserver) {
