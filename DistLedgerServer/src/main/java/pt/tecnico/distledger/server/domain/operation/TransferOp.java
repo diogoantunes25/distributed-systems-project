@@ -1,5 +1,7 @@
 package pt.tecnico.distledger.server.domain.operation;
 
+import pt.tecnico.distledger.server.visitor.Visitor;
+
 public class TransferOp extends Operation {
     private String destAccount;
     private int amount;
@@ -26,4 +28,7 @@ public class TransferOp extends Operation {
         this.amount = amount;
     }
 
+    public <T> T accept(Visitor<T> visitor) {
+        return visitor.visit(this);
+    }
 }

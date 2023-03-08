@@ -1,6 +1,8 @@
 package pt.tecnico.distledger.server.domain.operation;
 
-public class Operation {
+import pt.tecnico.distledger.server.visitor.Visitor;
+
+public abstract class Operation {
     private String account;
 
     public Operation(String fromAccount) {
@@ -15,4 +17,5 @@ public class Operation {
         this.account = account;
     }
 
+    public abstract <T> T accept(Visitor<T> visitor);
 }
