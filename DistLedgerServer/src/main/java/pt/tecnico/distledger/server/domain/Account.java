@@ -7,7 +7,7 @@ public class Account {
     private String userId;
 
     public static final int TOTAL_COIN = 1000;
-    public static final String BROKER_ID = "__BROKER__";
+    public static final String BROKER_ID = "broker";
 
     private Account(String userId, int initialBalance) {
         this.userId = userId;

@@ -66,6 +66,7 @@ public class CommandParser {
                         break;
 
                     default:
+                        System.out.println("Command not found. Type 'help' for a list of commands.");
                         break;
                 }
                 
