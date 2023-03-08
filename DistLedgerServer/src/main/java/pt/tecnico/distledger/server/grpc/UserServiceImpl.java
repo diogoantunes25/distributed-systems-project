@@ -21,6 +21,7 @@ public class UserServiceImpl extends UserServiceGrpc.UserServiceImplBase {
     final String BALANCE_NOT_ZERO = "Balance Not Zero";
     final String BROKER_CANNOT_BE_DELETED = "Broker Cannot Be Deleted";
     final String SERVER_UNAVAILABLE = "Server Unavailable";
+    final String INVALID_TRANSFER_AMOUNT = "Amount to transfer must positive";
 
 
     @Override
@@ -119,6 +120,9 @@ public class UserServiceImpl extends UserServiceGrpc.UserServiceImplBase {
         } catch (ServerUnavailableException e) {
             System.err.println(SERVER_UNAVAILABLE);
             responseObserver.onError(Status.UNAVAILABLE.withDescription(SERVER_UNAVAILABLE).asRuntimeException());
+        } catch (InvalidTransferAmountException e) {
+            System.err.println(INVALID_TRANSFER_AMOUNT);
+            responseObserver.onError(Status.INVALID_ARGUMENT.withDescription(INVALID_TRANSFER_AMOUNT).asRuntimeException());
         }
     }
 
