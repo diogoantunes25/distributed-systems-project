@@ -26,6 +26,7 @@ public class UserService {
         } catch (StatusRuntimeException e) {
             System.out.println(e.getStatus().getDescription());
             System.err.println(e.getMessage());
+            System.out.println("");
         }
     }
 
@@ -40,6 +41,7 @@ public class UserService {
         } catch (StatusRuntimeException e) {
             System.out.println(e.getStatus().getDescription());
             System.err.println(e.getMessage());
+            System.out.println("");
         }
     }
     
@@ -54,6 +56,7 @@ public class UserService {
         } catch (StatusRuntimeException e) {
             System.out.println(e.getStatus().getDescription());
             System.err.println(e.getMessage());
+            System.out.println("");
         }
     }
 
@@ -69,6 +72,7 @@ public class UserService {
         } catch (StatusRuntimeException e) {
             System.out.println(e.getStatus().getDescription());
             System.err.println(e.getMessage());
+            System.out.println("");
         }
     }
 
