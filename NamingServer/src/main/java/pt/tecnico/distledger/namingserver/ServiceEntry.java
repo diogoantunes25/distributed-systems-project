@@ -1,7 +1,12 @@
 package pt.tecnico.distledger.namingserver;
 
+import pt.tecnico.distledger.namingserver.exceptions.CannotDeleteException;
+import pt.tecnico.distledger.namingserver.exceptions.NoSuchServerException;
+
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 public class ServiceEntry {
 
@@ -29,12 +34,28 @@ public class ServiceEntry {
         return servers;
     }
 
+    public List<ServerEntry> getServers(final String qualifier) {
+        return servers.stream().filter(se -> se.getQualifier().compareTo(qualifier) == 0).collect(Collectors.toList());
+    }
+
     public void setServers(Set<ServerEntry> servers) {
         this.servers = servers;
     }
 
     public void addServer(ServerEntry server) {
         this.servers.add(server);
+    }
+
+    public void deleteServer(String hostname, int port)
+        throws NoSuchServerException {
+        for (ServerEntry entry: servers) {
+            if (entry.getHostname().compareTo(hostname) == 0 && entry.getPort() == port) {
+                servers.remove(entry);
+                return;
+            }
+        }
+
+        throw new NoSuchServerException(hostname, port);
     }
 
     public boolean hasServer(String hostname, int port) {

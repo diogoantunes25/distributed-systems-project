@@ -1,13 +1,18 @@
 package pt.tecnico.distledger.namingserver;
 
+import pt.tecnico.distledger.namingserver.exceptions.CannotDeleteException;
 import pt.tecnico.distledger.namingserver.exceptions.DuplicateServiceException;
+import pt.tecnico.distledger.namingserver.exceptions.NoSuchServerException;
 import pt.tecnico.distledger.namingserver.grpc.NamingServerServiceImpl;
 import pt.ulisboa.tecnico.distledger.contract.distledgerserver.NamingServerDistLedger.*;
 import io.grpc.Server;
 import io.grpc.ServerBuilder;
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class NamingServer {
 
@@ -44,5 +49,30 @@ public class NamingServer {
 
         serviceEntry.addServer(new ServerEntry(hostname, port, qualifier));
         System.out.println(String.format("Service added: %s @ %s:%s", serviceName, hostname, port));
+    }
+
+    public void delete(String serviceName, String hostname, int port)
+        throws CannotDeleteException {
+        if (!services.containsKey(serviceName)) {
+            throw new CannotDeleteException(serviceName, hostname, port);
+        }
+
+        try {
+            services.get(serviceName).deleteServer(hostname, port);
+        } catch (NoSuchServerException e) {
+            throw new CannotDeleteException(serviceName, hostname, port, e);
+        }
+    }
+
+    public List<ServerEntry> lookup(String serviceName, String qualifier) {
+        if (qualifier.length() == 0) {
+            return services.get(serviceName).getServers().stream().collect(Collectors.toList());
+        }
+
+        if (!services.containsKey(serviceName)) {
+            return new LinkedList<ServerEntry>();
+        }
+
+        return services.get(serviceName).getServers(qualifier);
     }
 }
