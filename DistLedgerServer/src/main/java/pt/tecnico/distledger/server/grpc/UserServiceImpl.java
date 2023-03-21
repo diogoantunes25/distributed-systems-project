@@ -14,6 +14,8 @@ import pt.ulisboa.tecnico.distledger.contract.user.UserServiceGrpc;
 public class UserServiceImpl extends UserServiceGrpc.UserServiceImplBase {
 
     private ServerState state;
+    private final String qual;
+    private static final String PRIMARY_QUAL = "A";
 
     final String ACCOUNT_ALREADY_EXISTS = "This Account Already Exists";
     final String ACCOUNT_DOES_NOT_EXIST = "This Account Does Not Exist";
@@ -22,58 +24,74 @@ public class UserServiceImpl extends UserServiceGrpc.UserServiceImplBase {
     final String BROKER_CANNOT_BE_DELETED = "Broker Cannot Be Deleted";
     final String SERVER_UNAVAILABLE = "Server Unavailable";
     final String INVALID_TRANSFER_AMOUNT = "Amount to transfer must positive";
+    final String ONLY_PRIMARY_CAN_WRITE = "Write operations can only be executed by primary server";
 
-    public UserServiceImpl(ServerState state) {
+    public UserServiceImpl(ServerState state, String qual) {
         this.state = state;
+        this.qual = qual;
+    }
+
+    public boolean canWrite() {
+        return qual == PRIMARY_QUAL;
     }
 
     @Override
     public void createAccount(CreateAccountRequest request, StreamObserver<CreateAccountResponse> responseObserver) {
-        
-        try {
-            String userID = request.getUserId();
-            state.createAccount(userID);
 
-            CreateAccountResponse response = CreateAccountResponse.newBuilder().build();
-            responseObserver.onNext(response);
-            responseObserver.onCompleted();
+        if (canWrite()) {
+            try {
+                String userID = request.getUserId();
+                state.createAccount(userID);
 
-        } catch (AccountAlreadyExistsException e) {
-            System.err.println(ACCOUNT_ALREADY_EXISTS);
-            responseObserver.onError(Status.ALREADY_EXISTS.withDescription(ACCOUNT_ALREADY_EXISTS).asRuntimeException());
+                CreateAccountResponse response = CreateAccountResponse.newBuilder().build();
+                responseObserver.onNext(response);
+                responseObserver.onCompleted();
 
-        } catch (ServerUnavailableException e) {
-            System.err.println(SERVER_UNAVAILABLE);
-            responseObserver.onError(Status.UNAVAILABLE.withDescription(SERVER_UNAVAILABLE).asRuntimeException());
+            } catch (AccountAlreadyExistsException e) {
+                System.err.println(ACCOUNT_ALREADY_EXISTS);
+                responseObserver.onError(Status.ALREADY_EXISTS.withDescription(ACCOUNT_ALREADY_EXISTS).asRuntimeException());
+
+            } catch (ServerUnavailableException e) {
+                System.err.println(SERVER_UNAVAILABLE);
+                responseObserver.onError(Status.UNAVAILABLE.withDescription(SERVER_UNAVAILABLE).asRuntimeException());
+            }
+        } else {
+            System.err.println(ONLY_PRIMARY_CAN_WRITE);
+            responseObserver.onError(Status.PERMISSION_DENIED.withDescription(ONLY_PRIMARY_CAN_WRITE).asRuntimeException());
         }
     }
 
     @Override
     public void deleteAccount(DeleteAccountRequest request, StreamObserver<DeleteAccountResponse> responseObserver) {
 
-        try {
-            String userID = request.getUserId();
-            state.deleteAccount(userID);
+        if (canWrite()) {
+            try {
+                String userID = request.getUserId();
+                state.deleteAccount(userID);
 
-            DeleteAccountResponse response = DeleteAccountResponse.newBuilder().build();
-            responseObserver.onNext(response);
-            responseObserver.onCompleted();
+                DeleteAccountResponse response = DeleteAccountResponse.newBuilder().build();
+                responseObserver.onNext(response);
+                responseObserver.onCompleted();
 
-        } catch (AccountDoesNotExistException e) {
-            System.err.println(ACCOUNT_DOES_NOT_EXIST);
-            responseObserver.onError(Status.NOT_FOUND.withDescription(ACCOUNT_DOES_NOT_EXIST).asRuntimeException());
+            } catch (AccountDoesNotExistException e) {
+                System.err.println(ACCOUNT_DOES_NOT_EXIST);
+                responseObserver.onError(Status.NOT_FOUND.withDescription(ACCOUNT_DOES_NOT_EXIST).asRuntimeException());
 
-        } catch (BalanceNotZeroException e) {
-            System.err.println(BALANCE_NOT_ZERO);
-            responseObserver.onError(Status.FAILED_PRECONDITION.withDescription(BALANCE_NOT_ZERO).asRuntimeException());
+            } catch (BalanceNotZeroException e) {
+                System.err.println(BALANCE_NOT_ZERO);
+                responseObserver.onError(Status.FAILED_PRECONDITION.withDescription(BALANCE_NOT_ZERO).asRuntimeException());
 
-        } catch (BrokerCannotBeDeletedException e) {
-            System.err.println(BROKER_CANNOT_BE_DELETED);
-            responseObserver.onError(Status.INVALID_ARGUMENT.withDescription(BROKER_CANNOT_BE_DELETED).asRuntimeException());
+            } catch (BrokerCannotBeDeletedException e) {
+                System.err.println(BROKER_CANNOT_BE_DELETED);
+                responseObserver.onError(Status.INVALID_ARGUMENT.withDescription(BROKER_CANNOT_BE_DELETED).asRuntimeException());
 
-        } catch (ServerUnavailableException e) {
-            System.err.println(SERVER_UNAVAILABLE);
-            responseObserver.onError(Status.UNAVAILABLE.withDescription(SERVER_UNAVAILABLE).asRuntimeException());
+            } catch (ServerUnavailableException e) {
+                System.err.println(SERVER_UNAVAILABLE);
+                responseObserver.onError(Status.UNAVAILABLE.withDescription(SERVER_UNAVAILABLE).asRuntimeException());
+            }
+        } else {
+            System.err.println(ONLY_PRIMARY_CAN_WRITE);
+            responseObserver.onError(Status.PERMISSION_DENIED.withDescription(ONLY_PRIMARY_CAN_WRITE).asRuntimeException());
         }
     }
     
@@ -102,32 +120,35 @@ public class UserServiceImpl extends UserServiceGrpc.UserServiceImplBase {
     @Override
     public void transferTo(TransferToRequest request, StreamObserver<TransferToResponse> responseObserver) {
 
-        try {
-            String userID = request.getAccountFrom();
-            String dest = request.getAccountTo();
-            Integer amount = request.getAmount();
+        if (canWrite()) {
+            try {
+                String userID = request.getAccountFrom();
+                String dest = request.getAccountTo();
+                Integer amount = request.getAmount();
 
-            state.transferTo(userID, dest, amount);
-            TransferToResponse response = TransferToResponse.newBuilder().build();
-            responseObserver.onNext(response);
-            responseObserver.onCompleted();
+                state.transferTo(userID, dest, amount);
+                TransferToResponse response = TransferToResponse.newBuilder().build();
+                responseObserver.onNext(response);
+                responseObserver.onCompleted();
 
-        } catch (AccountDoesNotExistException e) {
-            System.err.println(ACCOUNT_DOES_NOT_EXIST);
-            responseObserver.onError(Status.NOT_FOUND.withDescription(ACCOUNT_DOES_NOT_EXIST).asRuntimeException());
+            } catch (AccountDoesNotExistException e) {
+                System.err.println(ACCOUNT_DOES_NOT_EXIST);
+                responseObserver.onError(Status.NOT_FOUND.withDescription(ACCOUNT_DOES_NOT_EXIST).asRuntimeException());
 
-        } catch (NotEnoughBalanceException e) {
-            System.err.println(NOT_ENOUGH_BALANCE);
-            responseObserver.onError(Status.FAILED_PRECONDITION.withDescription(NOT_ENOUGH_BALANCE).asRuntimeException());
+            } catch (NotEnoughBalanceException e) {
+                System.err.println(NOT_ENOUGH_BALANCE);
+                responseObserver.onError(Status.FAILED_PRECONDITION.withDescription(NOT_ENOUGH_BALANCE).asRuntimeException());
 
-        } catch (ServerUnavailableException e) {
-            System.err.println(SERVER_UNAVAILABLE);
-            responseObserver.onError(Status.UNAVAILABLE.withDescription(SERVER_UNAVAILABLE).asRuntimeException());
-        } catch (InvalidTransferAmountException e) {
-            System.err.println(INVALID_TRANSFER_AMOUNT);
-            responseObserver.onError(Status.INVALID_ARGUMENT.withDescription(INVALID_TRANSFER_AMOUNT).asRuntimeException());
+            } catch (ServerUnavailableException e) {
+                System.err.println(SERVER_UNAVAILABLE);
+                responseObserver.onError(Status.UNAVAILABLE.withDescription(SERVER_UNAVAILABLE).asRuntimeException());
+            } catch (InvalidTransferAmountException e) {
+                System.err.println(INVALID_TRANSFER_AMOUNT);
+                responseObserver.onError(Status.INVALID_ARGUMENT.withDescription(INVALID_TRANSFER_AMOUNT).asRuntimeException());
+            }
+        } else {
+            System.err.println(ONLY_PRIMARY_CAN_WRITE);
+            responseObserver.onError(Status.PERMISSION_DENIED.withDescription(ONLY_PRIMARY_CAN_WRITE).asRuntimeException());
         }
     }
-
-    
 }

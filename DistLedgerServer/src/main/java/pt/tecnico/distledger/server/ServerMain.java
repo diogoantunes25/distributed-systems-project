@@ -20,11 +20,12 @@ public class ServerMain {
         }
 
         final int port = Integer.parseInt(args[0]);
+        final String qual = args[1];
 
         ServerState state = new ServerState();
         Server server = ServerBuilder.forPort(port)
-                                     .addService(new UserServiceImpl(state))
-                                     .addService(new AdminServiceImpl(state))
+                                     .addService(new UserServiceImpl(state, qual))
+                                     .addService(new AdminServiceImpl(state, qual))
                                      .build();
 
         server.start();

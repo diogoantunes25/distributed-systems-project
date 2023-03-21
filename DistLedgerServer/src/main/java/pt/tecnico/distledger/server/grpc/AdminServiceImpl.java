@@ -19,9 +19,11 @@ import pt.ulisboa.tecnico.distledger.contract.admin.AdminServiceGrpc;
 public class AdminServiceImpl extends AdminServiceGrpc.AdminServiceImplBase{
 
     private ServerState state;
+    private final String qual;
 
-    public AdminServiceImpl(ServerState state) {
+    public AdminServiceImpl(ServerState state, String qual) {
         this.state = state;
+        this.qual = qual;
     }
 
     @Override
@@ -50,12 +52,11 @@ public class AdminServiceImpl extends AdminServiceGrpc.AdminServiceImplBase{
 
     @Override
     public void getLedgerState(getLedgerStateRequest request, StreamObserver<getLedgerStateResponse> responseObserver) {
-
         LedgerState.Builder ledger = LedgerState.newBuilder();
         state.getLedgerState().stream()
               .map(o -> o.accept(new MessageConverterVisitor()))
               .forEach(v -> ledger.addLedger(v));
-        
+
         getLedgerStateResponse response = getLedgerStateResponse.newBuilder().setLedgerState(ledger).build();
         responseObserver.onNext(response);
         responseObserver.onCompleted();
