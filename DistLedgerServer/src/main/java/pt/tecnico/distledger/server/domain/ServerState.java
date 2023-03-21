@@ -125,7 +125,12 @@ public class ServerState {
 
     public synchronized void updateLedger(List<Operation> proposedLedger) {
         // Reset ledger
-        // FIXME: Check if ROOT user is as it should
+
+        // Guarantees I don't update to older ledger (because ledger is append-only)
+        if (proposedLedger.size() <= this.ledger.size()) {
+            return;
+        }
+
         Map<String, Account> oldAccounts = this.accounts;
         List<Operation> oldLedger = this.ledger;
         this.ledger = new ArrayList<>();
