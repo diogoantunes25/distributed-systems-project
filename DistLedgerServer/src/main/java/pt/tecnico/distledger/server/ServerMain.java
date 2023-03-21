@@ -3,6 +3,8 @@ package pt.tecnico.distledger.server;
 import io.grpc.Server;
 import io.grpc.ServerBuilder;
 import pt.tecnico.distledger.server.domain.ServerState;
+import pt.tecnico.distledger.server.exceptions.ServerRegistrationFailedException;
+import pt.tecnico.distledger.server.exceptions.ServerUnregistrationFailedException;
 import pt.tecnico.distledger.server.grpc.AdminServiceImpl;
 import pt.tecnico.distledger.server.grpc.UserServiceImpl;
 
@@ -10,6 +12,8 @@ import java.io.IOException;
 
 
 public class ServerMain {
+
+    public static final String NAME_SERVER = "localhost:5001";
 
     public static void main(String[] args) throws IOException, InterruptedException {
 
@@ -21,11 +25,24 @@ public class ServerMain {
 
         final int port = Integer.parseInt(args[0]);
         final String qual = args[1];
+        final String myAddress = String.format("localhost:%s", port);
 
         ServerState state = new ServerState();
+
+        UserServiceImpl userService = new UserServiceImpl(state, qual, NAME_SERVER);
+        AdminServiceImpl adminService = new AdminServiceImpl(state, qual, NAME_SERVER);
+
+        try {
+            userService.register(myAddress);
+            adminService.register(myAddress);
+        } catch (ServerRegistrationFailedException e) {
+            e.printStackTrace();
+            return;
+        }
+
         Server server = ServerBuilder.forPort(port)
-                                     .addService(new UserServiceImpl(state, qual))
-                                     .addService(new AdminServiceImpl(state, qual))
+                                     .addService(userService)
+                                     .addService(adminService)
                                      .build();
 
         server.start();
@@ -34,5 +51,4 @@ public class ServerMain {
 
         server.awaitTermination();
     }
-
 }

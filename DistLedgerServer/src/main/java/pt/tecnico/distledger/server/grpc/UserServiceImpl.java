@@ -1,11 +1,14 @@
 package pt.tecnico.distledger.server.grpc;
 
-import io.grpc.Server;
-import io.grpc.Status;
+import io.grpc.*;
 import io.grpc.stub.StreamObserver;
 
 import pt.tecnico.distledger.server.domain.ServerState;
 import pt.tecnico.distledger.server.domain.exceptions.*;
+import pt.tecnico.distledger.server.exceptions.ServerRegistrationFailedException;
+import pt.tecnico.distledger.server.exceptions.ServerUnregistrationFailedException;
+import pt.ulisboa.tecnico.distledger.contract.distledgerserver.NamingServerDistLedger;
+import pt.ulisboa.tecnico.distledger.contract.distledgerserver.NamingServiceGrpc;
 import pt.ulisboa.tecnico.distledger.contract.user.UserDistLedger.*;
 import pt.ulisboa.tecnico.distledger.contract.user.UserServiceGrpc;
 
@@ -17,6 +20,10 @@ public class UserServiceImpl extends UserServiceGrpc.UserServiceImplBase {
     private final String qual;
     private static final String PRIMARY_QUAL = "A";
 
+    private final ManagedChannel nameServerChannel;
+    private final NamingServiceGrpc.NamingServiceBlockingStub nameServerStub;
+    private final static String SERVICE_NAME = "UserService";
+
     final String ACCOUNT_ALREADY_EXISTS = "This Account Already Exists";
     final String ACCOUNT_DOES_NOT_EXIST = "This Account Does Not Exist";
     final String NOT_ENOUGH_BALANCE = "Not Enough Balance";
@@ -26,13 +33,47 @@ public class UserServiceImpl extends UserServiceGrpc.UserServiceImplBase {
     final String INVALID_TRANSFER_AMOUNT = "Amount to transfer must positive";
     final String ONLY_PRIMARY_CAN_WRITE = "Write operations can only be executed by primary server";
 
-    public UserServiceImpl(ServerState state, String qual) {
+    public UserServiceImpl(ServerState state, String qual, String nameServer) {
         this.state = state;
         this.qual = qual;
+
+        this.nameServerChannel = ManagedChannelBuilder.forTarget(nameServer).usePlaintext().build();
+        this.nameServerStub = NamingServiceGrpc.newBlockingStub(nameServerChannel);
+    }
+
+    public void register(String address) throws ServerRegistrationFailedException {
+        try {
+            NamingServerDistLedger.RegisterRequest request = NamingServerDistLedger.RegisterRequest
+                    .newBuilder()
+                    .setServiceName(SERVICE_NAME)
+                    .setQualifier(qual)
+                    .setAddress(address)
+                    .build();
+
+            NamingServerDistLedger.RegisterResponse response = nameServerStub.register(request);
+        } catch (StatusRuntimeException e) {
+            e.printStackTrace();
+            throw new ServerRegistrationFailedException(address, qual, SERVICE_NAME, e);
+        }
+    }
+
+    public void unregister(String address) throws ServerUnregistrationFailedException {
+        try {
+            NamingServerDistLedger.DeleteRequest request = NamingServerDistLedger.DeleteRequest
+                    .newBuilder()
+                    .setServiceName(SERVICE_NAME)
+                    .setHostname(address)
+                    .build();
+
+            nameServerStub.delete(request);
+        } catch (StatusRuntimeException e) {
+            e.printStackTrace();
+            throw new ServerUnregistrationFailedException(address, qual, SERVICE_NAME, e);
+        }
     }
 
     public boolean canWrite() {
-        return qual == PRIMARY_QUAL;
+        return qual.equals(PRIMARY_QUAL);
     }
 
     @Override

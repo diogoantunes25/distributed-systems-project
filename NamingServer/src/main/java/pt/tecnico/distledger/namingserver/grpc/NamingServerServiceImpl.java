@@ -27,10 +27,11 @@ public class NamingServerServiceImpl extends NamingServiceGrpc.NamingServiceImpl
     public void register(RegisterRequest request, StreamObserver<RegisterResponse> responseObserver) {
         try {
             String hostname = request.getAddress().split(":", 0)[0];
-            int port = Integer.parseInt(request.getAddress().split(":", 0)[0]);
+            int port = Integer.parseInt(request.getAddress().split(":", 0)[1]);
             server.register(request.getServiceName(), request.getQualifier(), hostname, port);
             responseObserver.onNext(RegisterResponse.newBuilder().build());
             responseObserver.onCompleted();
+            System.out.printf("New service registered: %s @ %s with %s\n", request.getServiceName(), request.getAddress(), request.getQualifier());
         } catch (DuplicateServiceException e) {
             responseObserver.onError(Status.ALREADY_EXISTS.withDescription(DUPLICATE_SERVICE).asRuntimeException());
         }
@@ -52,7 +53,9 @@ public class NamingServerServiceImpl extends NamingServiceGrpc.NamingServiceImpl
     @Override
     public void delete(DeleteRequest request, StreamObserver<DeleteResponse> responseObserver) {
         try {
-            server.delete(request.getServiceName(), request.getHostname(), request.getPort());
+            String hostname = request.getHostname().split(":", 0)[0];
+            int port = Integer.parseInt(request.getHostname().split(":", 0)[1]);
+            server.delete(request.getServiceName(), hostname, port);
             responseObserver.onNext(DeleteResponse.newBuilder().build());
         } catch (CannotDeleteException e) {
             responseObserver.onError(Status.NOT_FOUND.withDescription(CANNOT_REMOVE_SERVER).asRuntimeException());
