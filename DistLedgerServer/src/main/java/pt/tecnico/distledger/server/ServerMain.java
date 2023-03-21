@@ -6,6 +6,7 @@ import pt.tecnico.distledger.server.domain.ServerState;
 import pt.tecnico.distledger.server.exceptions.ServerRegistrationFailedException;
 import pt.tecnico.distledger.server.exceptions.ServerUnregistrationFailedException;
 import pt.tecnico.distledger.server.grpc.AdminServiceImpl;
+import pt.tecnico.distledger.server.grpc.CrossServerServiceImpl;
 import pt.tecnico.distledger.server.grpc.UserServiceImpl;
 
 import java.io.IOException;
@@ -43,6 +44,7 @@ public class ServerMain {
         Server server = ServerBuilder.forPort(port)
                                      .addService(userService)
                                      .addService(adminService)
+                                     .addService(new CrossServerServiceImpl(state))
                                      .build();
 
         server.start();

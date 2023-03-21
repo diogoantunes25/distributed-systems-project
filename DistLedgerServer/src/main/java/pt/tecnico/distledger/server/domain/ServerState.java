@@ -5,6 +5,7 @@ import pt.tecnico.distledger.server.domain.operation.CreateOp;
 import pt.tecnico.distledger.server.domain.operation.DeleteOp;
 import pt.tecnico.distledger.server.domain.operation.Operation;
 import pt.tecnico.distledger.server.domain.operation.TransferOp;
+import pt.tecnico.distledger.server.visitor.ExecutorVisitor;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -26,11 +27,17 @@ public class ServerState {
         this.accounts.put(broker.getUserId(), broker);
     }
 
-    public synchronized void createAccount(String userId)
+    public void createAccount(String userId)
         throws AccountAlreadyExistsException, ServerUnavailableException {
         if (!active.get()) {
             throw new ServerUnavailableException();
         }
+
+        _createAccount(userId);
+    }
+
+    public synchronized void _createAccount(String userId)
+        throws AccountAlreadyExistsException {
 
         if (accounts.containsKey(userId)) {
             throw new AccountAlreadyExistsException(userId);
@@ -40,12 +47,20 @@ public class ServerState {
         ledger.add(new CreateOp(userId));
     }
 
-    public synchronized void deleteAccount(String userId)
-        throws AccountDoesNotExistException, BalanceNotZeroException,
-                ServerUnavailableException, BrokerCannotBeDeletedException {
+    public void deleteAccount(String userId)
+            throws AccountDoesNotExistException, BalanceNotZeroException,
+            ServerUnavailableException, BrokerCannotBeDeletedException {
+
         if (!active.get()) {
             throw new ServerUnavailableException();
         }
+
+        _deleteAccount(userId);
+    }
+
+    public synchronized void _deleteAccount(String userId)
+        throws AccountDoesNotExistException, BalanceNotZeroException,
+                BrokerCannotBeDeletedException {
 
         if (!accounts.containsKey(userId)) {
             throw new AccountDoesNotExistException(userId);
@@ -64,12 +79,19 @@ public class ServerState {
         ledger.add(new DeleteOp(userId));
     }
 
-    public synchronized void transferTo(String accountFrom, String accountTo, int amount)
-        throws AccountDoesNotExistException, NotEnoughBalanceException, ServerUnavailableException,
-                InvalidTransferAmountException {
+    public void transferTo(String accountFrom, String accountTo, int amount)
+            throws AccountDoesNotExistException, NotEnoughBalanceException, ServerUnavailableException,
+            InvalidTransferAmountException {
+
         if (!active.get()) {
             throw new ServerUnavailableException();
         }
+
+        _transferTo(accountFrom, accountTo, amount);
+    }
+
+    public synchronized void _transferTo(String accountFrom, String accountTo, int amount)
+        throws AccountDoesNotExistException, NotEnoughBalanceException, InvalidTransferAmountException {
 
         if (!accounts.containsKey(accountFrom)) {
             throw new AccountDoesNotExistException(accountFrom);
@@ -100,6 +122,28 @@ public class ServerState {
 
         return accounts.get(userId).getBalance();
     }
+
+    public synchronized void updateLedger(List<Operation> proposedLedger) {
+        // Reset ledger
+        // FIXME: Check if ROOT user is as it should
+        Map<String, Account> oldAccounts = this.accounts;
+        List<Operation> oldLedger = this.ledger;
+        this.ledger = new ArrayList<>();
+        accounts = new HashMap<>();
+        Account broker = Account.getBroker();
+        this.accounts.put(broker.getUserId(), broker);
+
+        // Replay all actions
+         ExecutorVisitor visitor = new ExecutorVisitor(this);
+         try {
+             for (Operation op: proposedLedger) op.accept(visitor);
+         } catch (InvalidLedgerException e) {
+             accounts = oldAccounts;
+             ledger = oldLedger;
+             throw e;
+         }
+    }
+
 
     public Map<String, Account> getAccounts() {
         return accounts;
