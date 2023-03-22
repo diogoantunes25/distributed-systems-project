@@ -8,11 +8,9 @@ import pt.tecnico.distledger.server.domain.operation.CreateOp;
 import pt.tecnico.distledger.server.domain.operation.DeleteOp;
 import pt.tecnico.distledger.server.domain.operation.Operation;
 import pt.tecnico.distledger.server.domain.operation.TransferOp;
-import pt.ulisboa.tecnico.distledger.contract.distledgerserver.CrossServerDistLedger;
 import pt.ulisboa.tecnico.distledger.contract.distledgerserver.CrossServerDistLedger.*;
 import pt.ulisboa.tecnico.distledger.contract.distledgerserver.DistLedgerCrossServerServiceGrpc;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class CrossServerServiceImpl extends DistLedgerCrossServerServiceGrpc.DistLedgerCrossServerServiceImplBase {
@@ -27,7 +25,15 @@ public class CrossServerServiceImpl extends DistLedgerCrossServerServiceGrpc.Dis
 
     @Override
     public void propagateState(PropagateStateRequest request, StreamObserver<PropagateStateResponse> responseStreamObserver) {
-        List<Operation> ledger = new ArrayList<>();
+
+        int ledgerSize = state.getLedgerState().size();
+        if(request.getStart() != ledgerSize) {
+            responseStreamObserver.onNext(PropagateStateResponse.newBuilder().setStart(ledgerSize).build());
+            responseStreamObserver.onCompleted();
+            return;
+        }
+
+        List<Operation> ledger = state.getLedgerState();
 
         request.getState().getLedgerList().forEach(op -> {
             switch (op.getType()) {
@@ -47,8 +53,8 @@ public class CrossServerServiceImpl extends DistLedgerCrossServerServiceGrpc.Dis
 
         try {
             state.updateLedger(ledger);
-            System.out.printf("Ledger updated to %s\n", state.getLedgerState());
-            responseStreamObserver.onNext(PropagateStateResponse.newBuilder().build());
+
+            responseStreamObserver.onNext(PropagateStateResponse.newBuilder().setStart(ledger.size()).build());
             responseStreamObserver.onCompleted();
         } catch (InvalidLedgerException e) {
             responseStreamObserver.onError(Status.INVALID_ARGUMENT.withDescription(INVALID_LEDGER_STATE).asRuntimeException());
