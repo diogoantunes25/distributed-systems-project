@@ -28,7 +28,7 @@ public class ServerState {
     }
 
     public void createAccount(String userId)
-        throws AccountAlreadyExistsException, ServerUnavailableException {
+            throws AccountAlreadyExistsException, ServerUnavailableException {
         if (!active.get()) {
             throw new ServerUnavailableException();
         }
@@ -36,13 +36,18 @@ public class ServerState {
         _createAccount(userId);
     }
 
-    public synchronized void _createAccount(String userId)
-        throws AccountAlreadyExistsException {
+    public void assertCanCreateAccount(String userId)
+            throws AccountAlreadyExistsException {
 
         if (accounts.containsKey(userId)) {
             throw new AccountAlreadyExistsException(userId);
-        } 
+        }
+    }
 
+    public synchronized void _createAccount(String userId)
+            throws AccountAlreadyExistsException {
+
+        assertCanCreateAccount(userId);
         accounts.put(userId, new Account(userId));
         ledger.add(new CreateOp(userId));
     }
@@ -58,9 +63,8 @@ public class ServerState {
         _deleteAccount(userId);
     }
 
-    public synchronized void _deleteAccount(String userId)
-        throws AccountDoesNotExistException, BalanceNotZeroException,
-                BrokerCannotBeDeletedException {
+    public void assertCanDeleteAccount(String userId) throws AccountDoesNotExistException, BalanceNotZeroException,
+            BrokerCannotBeDeletedException {
 
         if (!accounts.containsKey(userId)) {
             throw new AccountDoesNotExistException(userId);
@@ -74,7 +78,14 @@ public class ServerState {
         if (user.getBalance() != 0) {
             throw new BalanceNotZeroException(userId, user.getBalance());
         }
+    }
 
+
+    public synchronized void _deleteAccount(String userId)
+            throws AccountDoesNotExistException, BalanceNotZeroException,
+            BrokerCannotBeDeletedException {
+
+        assertCanDeleteAccount(userId);
         accounts.remove(userId);
         ledger.add(new DeleteOp(userId));
     }
@@ -90,9 +101,8 @@ public class ServerState {
         _transferTo(accountFrom, accountTo, amount);
     }
 
-    public synchronized void _transferTo(String accountFrom, String accountTo, int amount)
-        throws AccountDoesNotExistException, NotEnoughBalanceException, InvalidTransferAmountException {
-
+    public synchronized void assertCanTransferTo(String accountFrom, String accountTo, int amount)
+            throws AccountDoesNotExistException, NotEnoughBalanceException, InvalidTransferAmountException {
         if (!accounts.containsKey(accountFrom)) {
             throw new AccountDoesNotExistException(accountFrom);
         }
@@ -101,10 +111,16 @@ public class ServerState {
             throw new AccountDoesNotExistException(accountTo);
         }
 
-		if (amount <= 0) {
+        if (amount <= 0) {
             throw new InvalidTransferAmountException(amount);
-		}
+        }
 
+    }
+
+    public synchronized void _transferTo(String accountFrom, String accountTo, int amount)
+        throws AccountDoesNotExistException, NotEnoughBalanceException, InvalidTransferAmountException {
+
+        assertCanTransferTo(accountFrom, accountTo, amount);
         accounts.get(accountFrom).decreaseBalance(amount);
         accounts.get(accountTo).increaseBalance(amount);
         ledger.add(new TransferOp(accountFrom, accountFrom, amount));
