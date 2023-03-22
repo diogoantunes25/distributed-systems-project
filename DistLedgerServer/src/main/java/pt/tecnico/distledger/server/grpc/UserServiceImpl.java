@@ -2,7 +2,6 @@ package pt.tecnico.distledger.server.grpc;
 
 import java.util.List;
 import java.util.Map;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -60,9 +59,12 @@ public class UserServiceImpl extends UserServiceGrpc.UserServiceImplBase {
         if (canWrite()) {
             try {
                 String userID = request.getUserId();
-                state.createAccount(userID);
 
-                propagateState();
+                synchronized (this) {
+                    state.assertCanCreateAccount(userID);
+                    propagateState();
+                    state.createAccount(userID);
+                }
 
                 CreateAccountResponse response = CreateAccountResponse.newBuilder().build();
                 responseObserver.onNext(response);
@@ -92,9 +94,12 @@ public class UserServiceImpl extends UserServiceGrpc.UserServiceImplBase {
         if (canWrite()) {
             try {
                 String userID = request.getUserId();
-                state.deleteAccount(userID);
 
-                propagateState();
+                synchronized (this) {
+                    state.assertCanDeleteAccount(userID);
+                    propagateState();
+                    state.deleteAccount(userID);
+                }
 
                 DeleteAccountResponse response = DeleteAccountResponse.newBuilder().build();
                 responseObserver.onNext(response);
@@ -157,9 +162,12 @@ public class UserServiceImpl extends UserServiceGrpc.UserServiceImplBase {
                 String dest = request.getAccountTo();
                 Integer amount = request.getAmount();
 
-                propagateState();
+                synchronized (this) {
+                    state.assertCanTransferTo(userID, dest, amount);
+                    propagateState();
+                    state.transferTo(userID, dest, amount);
+                }
 
-                state.transferTo(userID, dest, amount);
                 TransferToResponse response = TransferToResponse.newBuilder().build();
                 responseObserver.onNext(response);
                 responseObserver.onCompleted();
