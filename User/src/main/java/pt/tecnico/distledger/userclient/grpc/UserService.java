@@ -21,7 +21,7 @@ public class UserService {
 
     public ManagedChannel getServerChannel(String server) throws ServerLookupFailedException {
         NamingServerDistLedger.LookupRequest request = NamingServerDistLedger.LookupRequest.newBuilder()
-                .setServicename(SERVICE_NAME)
+                .setServiceName(SERVICE_NAME)
                 .setQualifier(server)
                 .build();
 

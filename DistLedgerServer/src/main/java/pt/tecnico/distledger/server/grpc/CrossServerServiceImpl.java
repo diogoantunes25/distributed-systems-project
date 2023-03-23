@@ -1,9 +1,13 @@
 package pt.tecnico.distledger.server.grpc;
 
+import java.util.List;
+
 import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
+
 import pt.tecnico.distledger.server.domain.ServerState;
 import pt.tecnico.distledger.server.domain.exceptions.InvalidLedgerException;
+import pt.tecnico.distledger.server.domain.exceptions.ServerUnavailableException;
 import pt.tecnico.distledger.server.domain.operation.CreateOp;
 import pt.tecnico.distledger.server.domain.operation.DeleteOp;
 import pt.tecnico.distledger.server.domain.operation.Operation;
@@ -11,11 +15,10 @@ import pt.tecnico.distledger.server.domain.operation.TransferOp;
 import pt.ulisboa.tecnico.distledger.contract.distledgerserver.CrossServerDistLedger.*;
 import pt.ulisboa.tecnico.distledger.contract.distledgerserver.DistLedgerCrossServerServiceGrpc;
 
-import java.util.List;
-
 public class CrossServerServiceImpl extends DistLedgerCrossServerServiceGrpc.DistLedgerCrossServerServiceImplBase {
 
-    final String INVALID_LEDGER_STATE = "Ledger state contains invalid operations";
+    final String INVALID_LEDGER_STATE = "Ledger State Contains Invalid Operations";
+    final String SERVER_UNAVAILABLE = "Server Is Unavailable";
 
     private ServerState state;
 
@@ -25,14 +28,6 @@ public class CrossServerServiceImpl extends DistLedgerCrossServerServiceGrpc.Dis
 
     @Override
     public void propagateState(PropagateStateRequest request, StreamObserver<PropagateStateResponse> responseStreamObserver) {
-
-        int ledgerSize = state.getLedgerState().size();
-        if(request.getStart() != ledgerSize) {
-            responseStreamObserver.onNext(PropagateStateResponse.newBuilder().setStart(ledgerSize).build());
-            responseStreamObserver.onCompleted();
-            return;
-        }
-
         List<Operation> ledger = state.getLedgerState();
 
         request.getState().getLedgerList().forEach(op -> {
@@ -54,10 +49,12 @@ public class CrossServerServiceImpl extends DistLedgerCrossServerServiceGrpc.Dis
         try {
             state.updateLedger(ledger);
 
-            responseStreamObserver.onNext(PropagateStateResponse.newBuilder().setStart(ledger.size()).build());
+            responseStreamObserver.onNext(PropagateStateResponse.newBuilder().build());
             responseStreamObserver.onCompleted();
         } catch (InvalidLedgerException e) {
             responseStreamObserver.onError(Status.INVALID_ARGUMENT.withDescription(INVALID_LEDGER_STATE).asRuntimeException());
+        } catch (ServerUnavailableException e) {
+            responseStreamObserver.onError(Status.UNAVAILABLE.withDescription(SERVER_UNAVAILABLE).asRuntimeException());
         }
     }
 }

@@ -1,17 +1,17 @@
 package pt.tecnico.distledger.server.domain;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
+
 import pt.tecnico.distledger.server.domain.exceptions.*;
 import pt.tecnico.distledger.server.domain.operation.CreateOp;
 import pt.tecnico.distledger.server.domain.operation.DeleteOp;
 import pt.tecnico.distledger.server.domain.operation.Operation;
 import pt.tecnico.distledger.server.domain.operation.TransferOp;
 import pt.tecnico.distledger.server.visitor.ExecutorVisitor;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 public class ServerState {
     volatile private List<Operation> ledger;
@@ -139,7 +139,12 @@ public class ServerState {
         return accounts.get(userId).getBalance();
     }
 
-    public synchronized void updateLedger(List<Operation> proposedLedger) {
+    public synchronized void updateLedger(List<Operation> proposedLedger) 
+            throws ServerUnavailableException {
+        if (!active.get()) {
+            throw new ServerUnavailableException();
+        }
+
         // Reset ledger
 
         // Guarantees I don't update to older ledger (because ledger is append-only)
@@ -178,6 +183,7 @@ public class ServerState {
         active.set(false);
     }
 
+    // TODO: is this synchronized?
     public List<Operation> getLedgerState() {
         return ledger;
     }

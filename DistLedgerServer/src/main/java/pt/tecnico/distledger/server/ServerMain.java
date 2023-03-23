@@ -6,7 +6,7 @@ import pt.tecnico.distledger.server.domain.ServerState;
 import pt.tecnico.distledger.server.grpc.AdminServiceImpl;
 import pt.tecnico.distledger.server.grpc.CrossServerServiceImpl;
 import pt.tecnico.distledger.server.grpc.UserServiceImpl;
-import pt.tecnico.distledger.server.grpc.NamingServerServiceImpl;
+import pt.tecnico.distledger.server.grpc.NamingService;
 
 import java.io.IOException;
 
@@ -28,7 +28,7 @@ public class ServerMain {
         final String qual = args[1];
         final String target = HOST_NAME + ":" + port;
 
-        NamingServerServiceImpl.registerServer(SERVICE_NAME, qual, target);
+        NamingService.register(SERVICE_NAME, qual, target);
 
         ServerState state = new ServerState();
         Server server = ServerBuilder.forPort(port)
@@ -43,6 +43,6 @@ public class ServerMain {
 
         server.awaitTermination();
 
-        NamingServerServiceImpl.unregisterServer(SERVICE_NAME, target);
+        NamingService.remove(SERVICE_NAME, target);
     }
 }

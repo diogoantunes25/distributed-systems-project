@@ -1,19 +1,23 @@
 package pt.tecnico.distledger.namingserver.exceptions;
 
-public class NoSuchServerException extends NameServerException {
+public class CannotRegisterException extends NameServerException {
 
+    private String serviceName;
     private String hostname;
     private int port;
 
-    public NoSuchServerException(String hostname, int port, Throwable cause) {
-        super(String.format("No server %s:%s", hostname, port), cause);
+    public CannotRegisterException(String serviceName, String hostname, int port) {
+        this.serviceName = serviceName;
         this.hostname = hostname;
         this.port = port;
     }
 
-    public NoSuchServerException(String hostname, int port) {
-        this.hostname = hostname;
-        this.port = port;
+    public String getServiceName() {
+        return serviceName;
+    }
+
+    public void setServiceName(String serviceName) {
+        this.serviceName = serviceName;
     }
 
     public String getHostname() {

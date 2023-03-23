@@ -1,12 +1,5 @@
 package pt.tecnico.distledger.namingserver;
 
-import pt.tecnico.distledger.namingserver.exceptions.CannotDeleteException;
-import pt.tecnico.distledger.namingserver.exceptions.DuplicateServiceException;
-import pt.tecnico.distledger.namingserver.exceptions.NoSuchServerException;
-import pt.tecnico.distledger.namingserver.grpc.NamingServerServiceImpl;
-import pt.ulisboa.tecnico.distledger.contract.distledgerserver.NamingServerDistLedger.*;
-import io.grpc.Server;
-import io.grpc.ServerBuilder;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -14,63 +7,76 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-public class NamingServer {
+import io.grpc.Server;
+import io.grpc.ServerBuilder;
 
-    private static final int PORT = 5001;
+import pt.tecnico.distledger.namingserver.exceptions.CannotRemoveException;
+import pt.tecnico.distledger.namingserver.exceptions.CannotRegisterException;
+import pt.tecnico.distledger.namingserver.grpc.NamingServerServiceImpl;
+
+public class NamingServer {
 
     private Map<String, ServiceEntry> services = new HashMap<String, ServiceEntry>();
 
     public static void main(String[] args) throws InterruptedException, IOException {
-        NamingServer namingServer = new NamingServer();
-        Server server = ServerBuilder.forPort(PORT)
-                                     .addService(new NamingServerServiceImpl(namingServer))
-                                     .build();
+        if (args.length < 2) {
+            System.err.println("Argument(s) missing!");
+            System.err.printf("Usage: java %s port", NamingServer.class.getName());
+            return;
+        }
+
+        final int port = Integer.parseInt(args[0]);
+
+        Server server = ServerBuilder.forPort(port)
+                .addService(new NamingServerServiceImpl(new NamingServer()))
+                .build();
 
         server.start();
 
-        System.out.println("Naming server started, listening on " + PORT);
+        System.out.println("Naming server started, listening on " + port);
 
         server.awaitTermination();
     }
 
-    public void register(String serviceName, String qualifier, String hostname, int port) throws DuplicateServiceException {
-        if (!services.containsKey(serviceName)) {
-            services.put(serviceName, new ServiceEntry(serviceName));
+    public void register(String serviceName, String qualifier, String hostname, int port) throws CannotRegisterException {
+        ServiceEntry service = services.get(serviceName);
+        if (service == null) {
+            service = new ServiceEntry(serviceName);
+            services.put(serviceName, service);
+        } else {
+            throw new CannotRegisterException(serviceName, hostname, port);
         }
 
-        System.out.println(String.format("New service: %s", serviceName));
-
-        ServiceEntry serviceEntry = services.get(serviceName);
-
-        if (serviceEntry.hasServer(hostname, port)) {
-            System.out.println(String.format("Duplicate service: %s @ %s:%s", serviceName, hostname, port));
-            throw new DuplicateServiceException(serviceName, hostname, port);
-        }
-
-        serviceEntry.addServer(new ServerEntry(hostname, port, qualifier));
-        System.out.println(String.format("Service added: %s @ %s:%s", serviceName, hostname, port));
+        service.addServer(new ServerEntry(hostname, port, qualifier));
     }
 
-    public void delete(String serviceName, String hostname, int port)
-        throws CannotDeleteException {
-        if (!services.containsKey(serviceName)) {
-            throw new CannotDeleteException(serviceName, hostname, port);
+    public void remove(String serviceName, String hostname, int port)
+        throws CannotRemoveException {
+        ServiceEntry service = services.get(serviceName);
+        if (service == null) {
+            throw new CannotRemoveException(serviceName, hostname, port);
         }
 
-        try {
-            services.get(serviceName).deleteServer(hostname, port);
-        } catch (NoSuchServerException e) {
-            throw new CannotDeleteException(serviceName, hostname, port, e);
+        ServerEntry server = service.getServer(hostname, port);
+        if (server == null) {
+            throw new CannotRemoveException(serviceName, hostname, port);
         }
+
+        service.removeServer(server);
+        if(!service.hasServers()) {
+            services.remove(serviceName);
+        }
+        
     }
 
     public List<ServerEntry> lookup(String serviceName, String qualifier) {
-        if (qualifier.length() == 0) {
-            return services.get(serviceName).getServers().stream().collect(Collectors.toList());
+        ServiceEntry service = services.get(serviceName);
+        if (service == null) {
+            return new LinkedList<ServerEntry>();
         }
 
-        if (!services.containsKey(serviceName)) {
-            return new LinkedList<ServerEntry>();
+        if (qualifier.length() == 0) {
+            return service.getServers().stream().collect(Collectors.toList());
         }
 
         return services.get(serviceName).getServers(qualifier);

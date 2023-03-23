@@ -1,12 +1,18 @@
 package pt.tecnico.distledger.namingserver.exceptions;
 
-public class DuplicateServiceException extends NameServerException {
-
+public class CannotRemoveException extends NameServerException {
     private String serviceName;
     private String hostname;
     private int port;
 
-    public DuplicateServiceException(String serviceName, String hostname, int port) {
+    public CannotRemoveException(String serviceName, String hostname, int port, Throwable cause) {
+        super(String.format("Cannot remove service %s at %s:%s", serviceName ,hostname, port), cause);
+        this.serviceName = serviceName;
+        this.hostname = hostname;
+        this.port = port;
+    }
+
+    public CannotRemoveException(String serviceName, String hostname, int port) {
         this.serviceName = serviceName;
         this.hostname = hostname;
         this.port = port;
@@ -36,3 +42,4 @@ public class DuplicateServiceException extends NameServerException {
         this.port = port;
     }
 }
+

@@ -12,7 +12,7 @@ message RegisterRequest {
 message RegisterResponse { }
 
 message LookupRequest {
-  string servicename = 1;
+  string serviceName = 1;
   string qualifier = 2;
 }
 
@@ -20,16 +20,16 @@ message LookupResponse {
   repeated string services = 1;
 }
 
-message DeleteRequest {
+message RemoveRequest {
   string serviceName = 1;
-  string hostname = 2;
+  string address = 2;
 }
 
-message DeleteResponse { }
+message RemoveResponse { }
 
 service NamingService {
   rpc register(RegisterRequest) returns (RegisterResponse);
   rpc lookup(LookupRequest) returns (LookupResponse);
-  rpc delete(DeleteRequest) returns (DeleteResponse);
+  rpc remove(RemoveRequest) returns (RemoveResponse);
 }
 
