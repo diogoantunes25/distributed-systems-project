@@ -18,7 +18,7 @@ import pt.tecnico.distledger.server.grpc.CrossServerServiceImpl;
 
 public class ServerMain {
 
-    public void main(String[] args) {
+    public static void main(String[] args) {
 
         if (args.length < 2) {
             System.err.println("Argument(s) missing!");

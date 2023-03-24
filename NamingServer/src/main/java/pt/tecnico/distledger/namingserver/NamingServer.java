@@ -23,7 +23,7 @@ public class NamingServer {
     private Map<String, ServiceEntry> services = new HashMap<String, ServiceEntry>();
 
     public static void main(String[] args) throws InterruptedException, IOException {
-        if (args.length < 2) {
+        if (args.length < 1) {
             System.err.println("Argument(s) missing!");
             System.err.printf("Usage: java %s port", NamingServer.class.getName());
             return;
