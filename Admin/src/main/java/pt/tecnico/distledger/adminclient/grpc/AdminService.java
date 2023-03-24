@@ -16,7 +16,7 @@ import pt.tecnico.distledger.client.exceptions.ServerUnavailableException;
 public class AdminService extends Service {
 
     public void activate(String server) throws ServerUnavailableException, ServerLookupFailedException {
-        if (cacheHasServerEntry(server)) cacheRefresh(server);
+        if (!cacheHasServerEntry(server)) cacheRefresh(server);
 
         try {
             tryActivate(server);
@@ -49,7 +49,7 @@ public class AdminService extends Service {
     }
 
     public void deactivate(String server) throws ServerUnavailableException, ServerLookupFailedException {
-        if (cacheHasServerEntry(server)) cacheRefresh(server);
+        if (!cacheHasServerEntry(server)) cacheRefresh(server);
 
         try {
             tryDeactivate(server);
@@ -79,7 +79,7 @@ public class AdminService extends Service {
     }
 
     public void getLedgerState(String server) throws ServerLookupFailedException, ServerUnavailableException {
-        if (cacheHasServerEntry(server)) cacheRefresh(server);
+        if (!cacheHasServerEntry(server)) cacheRefresh(server);
 
         try {
             tryGetLedgerState(server);

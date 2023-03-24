@@ -17,7 +17,7 @@ public class UserService extends Service {
 
     public void createAccount(String server, String username)
             throws ServerLookupFailedException, ServerUnavailableException {
-        if (cacheHasServerEntry(server)) cacheRefresh(server);
+        if (!cacheHasServerEntry(server)) cacheRefresh(server);
 
         try {
             tryCreateAccount(server, username);
@@ -55,7 +55,7 @@ public class UserService extends Service {
 
     public void deleteAccount(String server, String username)
             throws ServerLookupFailedException, ServerUnavailableException {
-        if (cacheHasServerEntry(server)) cacheRefresh(server);
+        if (!cacheHasServerEntry(server)) cacheRefresh(server);
 
         try {
             tryDeleteAccount(server, username);
@@ -92,7 +92,7 @@ public class UserService extends Service {
     }
 
     public void balance(String server, String username) throws ServerUnavailableException, ServerLookupFailedException {
-        if (cacheHasServerEntry(server)) cacheRefresh(server);
+        if (!cacheHasServerEntry(server)) cacheRefresh(server);
 
         try {
             tryGetBalance(server, username);
@@ -129,7 +129,7 @@ public class UserService extends Service {
     }
 
     public void transferTo(String server, String username, String dest, Integer amount) throws ServerLookupFailedException, ServerUnavailableException {
-        if (cacheHasServerEntry(server)) cacheRefresh(server);
+        if (!cacheHasServerEntry(server)) cacheRefresh(server);
 
         try {
             tryTransferTo(server, username, dest, amount);

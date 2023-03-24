@@ -21,7 +21,7 @@ import pt.tecnico.distledger.server.visitor.MessageConverterVisitor;
 
 public class CrossServerClient {
 
-    private static final Integer TIMEOUT = 100; // miliseconds
+    private static final Integer TIMEOUT = 5000; // miliseconds
 
     private ServerState state;
     private final String qual;

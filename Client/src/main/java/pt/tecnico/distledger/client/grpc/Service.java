@@ -13,7 +13,7 @@ import pt.tecnico.distledger.namingserver.NamingServer;
 
 public abstract class Service {
     protected NamingServiceClient namingServiceClient = new NamingServiceClient();
-    protected final static int TIMEOUT = 100; // milliseconds
+    protected final static int TIMEOUT = 5000; // milliseconds
 
     // Caches ManagedChannel for qualifier
     protected final Map<String, ManagedChannel> serverCache = new HashMap<>();
@@ -37,6 +37,7 @@ public abstract class Service {
             System.out.println("WARNING: More than one secondary server found");
         }
 
+        System.out.println("Updating cache for " + qual + " with " + servers.get(0) + ".");
         cacheUpdate(qual, ManagedChannelBuilder.forTarget(servers.get(0)).usePlaintext().build());
     }
 
