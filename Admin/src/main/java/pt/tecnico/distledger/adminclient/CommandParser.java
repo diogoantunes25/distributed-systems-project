@@ -1,5 +1,8 @@
 package pt.tecnico.distledger.adminclient;
 
+import pt.tecnico.distledger.adminclient.exceptions.InvalidQualifierException;
+import pt.tecnico.distledger.adminclient.exceptions.ServerLookupFailedException;
+import pt.tecnico.distledger.adminclient.exceptions.ServerUnavailableException;
 import pt.tecnico.distledger.adminclient.grpc.AdminService;
 
 import java.util.Scanner;
@@ -16,6 +19,9 @@ public class CommandParser {
     private static final String HELP = "help";
     private static final String EXIT = "exit";
 
+    private static final String PRIMARY_QUAL = "A";
+    private static final String SECONDARY_QUAL = "B";
+
     private final AdminService adminService;
 
     public CommandParser(AdminService adminService) {
@@ -30,6 +36,12 @@ public class CommandParser {
 		if (DEBUG_FLAG)
 			System.err.println(debugMessage);
 	}
+
+    private void assertValidQualifier(String qual) throws InvalidQualifierException {
+        if (!qual.equals(PRIMARY_QUAL) && !qual.equals(SECONDARY_QUAL)) {
+            throw new InvalidQualifierException(qual);
+        }
+    }
 
     void parseInput() {
 
@@ -72,6 +84,13 @@ public class CommandParser {
                         break;
                 }
 
+            } catch (InvalidQualifierException e) {
+                System.out.println(String.format("Qualifier '%s' is invalid - must be '%s' or '%s'.", e.getQual(), PRIMARY_QUAL, SECONDARY_QUAL));
+            } catch (ServerUnavailableException e) {
+                System.out.println(String.format("Server is currently unavailable. For writes, you can use the other server."));
+            } catch (ServerLookupFailedException e) {
+                // TODO: User constant for service name
+                System.out.println(String.format("Can't find any server with provided qualifier for service '%s'", "DistLedger"));
             } catch (Exception e) {
                 System.err.println(e.getMessage());
             }
@@ -82,7 +101,7 @@ public class CommandParser {
         this.adminService.delete();
     }
 
-    private void activate(String line){
+    private void activate(String line) throws InvalidQualifierException, ServerLookupFailedException, ServerUnavailableException {
         String[] split = line.split(SPACE);
 
         if (split.length != 2){
@@ -90,13 +109,15 @@ public class CommandParser {
             return;
         }
         String server = split[1];
+
+        assertValidQualifier(server);
 
         debug("Server: " + server);
 
         this.adminService.activate(server);
     }
 
-    private void deactivate(String line){
+    private void deactivate(String line) throws InvalidQualifierException, ServerLookupFailedException, ServerUnavailableException {
         String[] split = line.split(SPACE);
 
         if (split.length != 2){
@@ -104,13 +125,15 @@ public class CommandParser {
             return;
         }
         String server = split[1];
+
+        assertValidQualifier(server);
 
         debug("Server: " + server);
 
         this.adminService.deactivate(server);
     }
 
-    private void dump(String line){
+    private void dump(String line) throws ServerLookupFailedException, ServerUnavailableException, InvalidQualifierException {
         String[] split = line.split(SPACE);
 
         if (split.length != 2){
@@ -118,6 +141,8 @@ public class CommandParser {
             return;
         }
         String server = split[1];
+
+        assertValidQualifier(server);
 
         debug("Server: " + server);
 

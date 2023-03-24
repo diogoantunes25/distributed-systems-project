@@ -1,5 +1,8 @@
 package pt.tecnico.distledger.userclient;
 
+import pt.tecnico.distledger.userclient.exceptions.InvalidQualifierException;
+import pt.tecnico.distledger.userclient.exceptions.ServerLookupFailedException;
+import pt.tecnico.distledger.userclient.exceptions.ServerUnavailableException;
 import pt.tecnico.distledger.userclient.grpc.UserService;
 
 import java.util.logging.Logger;
@@ -18,6 +21,9 @@ public class CommandParser {
     private static final String HELP = "help";
     private static final String EXIT = "exit";
 
+    private static final String PRIMARY_QUAL = "A";
+    private static final String SECONDARY_QUAL = "B";
+
     private final UserService userService;
 
     public CommandParser(UserService userService) {
@@ -26,6 +32,12 @@ public class CommandParser {
 
     public void setDebug(boolean debug) {
         logger.setLevel(debug ? Level.INFO : Level.WARNING);
+    }
+
+    private void assertValidQualifier(String qual) throws InvalidQualifierException {
+        if (!qual.equals(PRIMARY_QUAL) && !qual.equals(SECONDARY_QUAL)) {
+            throw new InvalidQualifierException(qual);
+        }
     }
 
     void parseInput() {
@@ -38,7 +50,7 @@ public class CommandParser {
             String line = scanner.nextLine().trim();
             String cmd = line.split(SPACE)[0];
 
-            try{
+            try {
                 logger.info("Command: " + cmd);
                 switch (cmd) {
                     case CREATE_ACCOUNT:
@@ -70,7 +82,14 @@ public class CommandParser {
                         System.out.println("");
                         break;
                 }
-                
+
+            } catch (InvalidQualifierException e) {
+                System.out.println(String.format("Qualifier '%s' is invalid - must be '%s' or '%s'.", e.getQual(), PRIMARY_QUAL, SECONDARY_QUAL));
+            } catch (ServerUnavailableException e) {
+                System.out.println(String.format("Server is currently unavailable. For writes, you can use the other server."));
+            } catch (ServerLookupFailedException e) {
+                // TODO: User constant for service name
+                System.out.println(String.format("Can't find any server with provided qualifier for service '%s'", "DistLedger"));
             } catch (Exception e){
                 System.err.println(e.getMessage());
             }
@@ -80,7 +99,7 @@ public class CommandParser {
         this.userService.delete();
     }
 
-    private void createAccount(String line){
+    private void createAccount(String line) throws InvalidQualifierException, ServerLookupFailedException, ServerUnavailableException {
         String[] split = line.split(SPACE);
 
         if (split.length != 3){
@@ -88,8 +107,11 @@ public class CommandParser {
             return;
         }
 
+
         String server = split[1];
         String username = split[2];
+
+        assertValidQualifier(server);
 
         logger.info("Server: " + server);
         logger.info("Username: " + username);
@@ -97,7 +119,7 @@ public class CommandParser {
         this.userService.createAccount(server, username);
     }
 
-    private void deleteAccount(String line){
+    private void deleteAccount(String line) throws InvalidQualifierException, ServerLookupFailedException, ServerUnavailableException {
         String[] split = line.split(SPACE);
 
         if (split.length != 3){
@@ -109,12 +131,14 @@ public class CommandParser {
 
         logger.info("Server: " + server);
         logger.info("Username: " + username);
+
+        assertValidQualifier(server);
 
         this.userService.deleteAccount(server, username);
     }
 
 
-    private void balance(String line){
+    private void balance(String line) throws InvalidQualifierException, ServerLookupFailedException, ServerUnavailableException {
         String[] split = line.split(SPACE);
 
         if (split.length != 3){
@@ -127,10 +151,12 @@ public class CommandParser {
         logger.info("Server: " + server);
         logger.info("Username: " + username);
 
+        assertValidQualifier(server);
+
         this.userService.balance(server, username);
     }
 
-    private void transferTo(String line){
+    private void transferTo(String line) throws InvalidQualifierException, ServerLookupFailedException, ServerUnavailableException {
         String[] split = line.split(SPACE);
 
         if (split.length != 5){
@@ -146,6 +172,8 @@ public class CommandParser {
         logger.info("Username: " + from);
         logger.info("Destination: " + dest);
         logger.info("Amount: " + amount);
+
+        assertValidQualifier(server);
 
         this.userService.transferTo(server, from, dest, amount);
     }
