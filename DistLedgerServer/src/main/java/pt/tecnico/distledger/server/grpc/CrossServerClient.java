@@ -10,13 +10,14 @@ import io.grpc.StatusRuntimeException;
 import pt.ulisboa.tecnico.distledger.contract.DistLedgerCommonDefinitions.LedgerState;
 import pt.ulisboa.tecnico.distledger.contract.distledgerserver.CrossServerDistLedger.*;
 import pt.ulisboa.tecnico.distledger.contract.distledgerserver.DistLedgerCrossServerServiceGrpc;
-import pt.tecnico.distledger.server.domain.ServerState;
-import pt.tecnico.distledger.server.domain.operation.Operation;
-import pt.tecnico.distledger.server.exceptions.CannotPropagateStateException;
-import pt.tecnico.distledger.server.exceptions.NoSecundaryServersException;
-import pt.tecnico.distledger.server.visitor.MessageConverterVisitor;
 import pt.tecnico.distledger.namingserver.grpc.NamingServiceClient;
 import pt.tecnico.distledger.namingserver.NamingServer;
+
+import pt.tecnico.distledger.server.exceptions.CannotPropagateStateException;
+import pt.tecnico.distledger.server.exceptions.NoSecundaryServersException;
+import pt.tecnico.distledger.server.domain.ServerState;
+import pt.tecnico.distledger.server.domain.operation.Operation;
+import pt.tecnico.distledger.server.visitor.MessageConverterVisitor;
 
 public class CrossServerClient {
 
@@ -24,9 +25,11 @@ public class CrossServerClient {
 
     private ServerState state;
     private final String qual;
+
     private String cachedServer;
     private Integer cachedServerStateSize;
     private ManagedChannel cachedChannel;
+    
     private NamingServiceClient namingServiceClient = new NamingServiceClient();
 
     public CrossServerClient(ServerState state, String qual) {

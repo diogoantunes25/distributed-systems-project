@@ -4,11 +4,12 @@ import java.util.concurrent.locks.ReentrantLock;
 
 import io.grpc.stub.StreamObserver;
 
-import pt.tecnico.distledger.server.domain.ServerState;
-import pt.tecnico.distledger.server.visitor.MessageConverterVisitor;
 import pt.ulisboa.tecnico.distledger.contract.admin.AdminDistLedger.*;
 import pt.ulisboa.tecnico.distledger.contract.DistLedgerCommonDefinitions.LedgerState;
 import pt.ulisboa.tecnico.distledger.contract.admin.AdminServiceGrpc;
+
+import pt.tecnico.distledger.server.domain.ServerState;
+import pt.tecnico.distledger.server.visitor.MessageConverterVisitor;
 
 public class AdminServiceImpl extends AdminServiceGrpc.AdminServiceImplBase{
 

@@ -5,15 +5,16 @@ import java.util.List;
 import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
 
-import pt.tecnico.distledger.server.domain.ServerState;
+import pt.ulisboa.tecnico.distledger.contract.distledgerserver.CrossServerDistLedger.*;
+import pt.ulisboa.tecnico.distledger.contract.distledgerserver.DistLedgerCrossServerServiceGrpc;
+
 import pt.tecnico.distledger.server.domain.exceptions.InvalidLedgerException;
 import pt.tecnico.distledger.server.domain.exceptions.ServerUnavailableException;
 import pt.tecnico.distledger.server.domain.operation.CreateOp;
 import pt.tecnico.distledger.server.domain.operation.DeleteOp;
 import pt.tecnico.distledger.server.domain.operation.Operation;
 import pt.tecnico.distledger.server.domain.operation.TransferOp;
-import pt.ulisboa.tecnico.distledger.contract.distledgerserver.CrossServerDistLedger.*;
-import pt.ulisboa.tecnico.distledger.contract.distledgerserver.DistLedgerCrossServerServiceGrpc;
+import pt.tecnico.distledger.server.domain.ServerState;
 
 public class CrossServerServiceImpl extends DistLedgerCrossServerServiceGrpc.DistLedgerCrossServerServiceImplBase {
 

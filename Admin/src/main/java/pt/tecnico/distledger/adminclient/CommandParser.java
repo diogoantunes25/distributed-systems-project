@@ -1,10 +1,11 @@
 package pt.tecnico.distledger.adminclient;
 
+import pt.tecnico.distledger.namingserver.NamingServer;
+
 import pt.tecnico.distledger.adminclient.exceptions.InvalidQualifierException;
 import pt.tecnico.distledger.adminclient.exceptions.ServerLookupFailedException;
 import pt.tecnico.distledger.adminclient.exceptions.ServerUnavailableException;
 import pt.tecnico.distledger.adminclient.grpc.AdminService;
-import pt.tecnico.distledger.namingserver.NamingServer;
 
 import java.util.Scanner;
 

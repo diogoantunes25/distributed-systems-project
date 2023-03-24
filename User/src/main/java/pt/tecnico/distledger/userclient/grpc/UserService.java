@@ -1,7 +1,7 @@
 package pt.tecnico.distledger.userclient.grpc;
 
-import java.util.HashMap;
 import java.util.List;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
@@ -12,10 +12,11 @@ import io.grpc.StatusRuntimeException;
 
 import pt.ulisboa.tecnico.distledger.contract.user.UserServiceGrpc;
 import pt.ulisboa.tecnico.distledger.contract.user.UserDistLedger.*;
-import pt.tecnico.distledger.userclient.exceptions.ServerLookupFailedException;
-import pt.tecnico.distledger.userclient.exceptions.ServerUnavailableException;
 import pt.tecnico.distledger.namingserver.grpc.NamingServiceClient;
 import pt.tecnico.distledger.namingserver.NamingServer;
+
+import pt.tecnico.distledger.userclient.exceptions.ServerLookupFailedException;
+import pt.tecnico.distledger.userclient.exceptions.ServerUnavailableException;
 
 public class UserService {
     private NamingServiceClient namingServiceClient = new NamingServiceClient();

@@ -10,12 +10,13 @@ import io.grpc.ManagedChannelBuilder;
 import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
 
-import pt.tecnico.distledger.adminclient.exceptions.ServerLookupFailedException;
-import pt.tecnico.distledger.adminclient.exceptions.ServerUnavailableException;
 import pt.ulisboa.tecnico.distledger.contract.admin.AdminServiceGrpc;
 import pt.ulisboa.tecnico.distledger.contract.admin.AdminDistLedger;
 import pt.tecnico.distledger.namingserver.grpc.NamingServiceClient;
 import pt.tecnico.distledger.namingserver.NamingServer;
+
+import pt.tecnico.distledger.adminclient.exceptions.ServerLookupFailedException;
+import pt.tecnico.distledger.adminclient.exceptions.ServerUnavailableException;
 
 public class AdminService {
     private NamingServiceClient namingServiceClient = new NamingServiceClient();

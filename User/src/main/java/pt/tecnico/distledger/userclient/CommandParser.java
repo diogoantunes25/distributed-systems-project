@@ -1,14 +1,15 @@
 package pt.tecnico.distledger.userclient;
 
+import java.util.logging.Logger;
+import java.util.logging.Level;
+import java.util.Scanner;
+
+import pt.tecnico.distledger.namingserver.NamingServer;
+
 import pt.tecnico.distledger.userclient.exceptions.InvalidQualifierException;
 import pt.tecnico.distledger.userclient.exceptions.ServerLookupFailedException;
 import pt.tecnico.distledger.userclient.exceptions.ServerUnavailableException;
 import pt.tecnico.distledger.userclient.grpc.UserService;
-import pt.tecnico.distledger.namingserver.NamingServer;
-
-import java.util.logging.Logger;
-import java.util.logging.Level;
-import java.util.Scanner;
 
 public class CommandParser {
 
