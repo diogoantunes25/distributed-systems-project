@@ -1,9 +1,9 @@
-package pt.tecnico.distledger.server.exceptions;
+package pt.tecnico.distledger.namingserver.exceptions;
 
 public class ServerUnregistrationFailedException extends Exception {
 
-    private static String server;
-    private static String service;
+    private String server;
+    private String service;
 
     public ServerUnregistrationFailedException(String server, String service, Throwable e) {
         super(String.format("Register for service %s at %s with qualifier %s failed", service, server), e);
@@ -11,11 +11,11 @@ public class ServerUnregistrationFailedException extends Exception {
         this.service = service;
     }
 
-    public static String getServer() {
+    public String getServer() {
         return server;
     }
 
-    public static String getService() {
+    public String getService() {
         return service;
     }
 }

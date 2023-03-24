@@ -7,7 +7,6 @@ import pt.tecnico.distledger.userclient.grpc.UserService;
 
 public class UserClientMain {
 
-    private static final String NAME_SERVER="localhost:5001";
     private static boolean debug_flag = false;
     private static final Logger logger = Logger.getLogger(UserClientMain.class.getName());
     
@@ -29,7 +28,7 @@ public class UserClientMain {
             }
         }
 
-        UserService userService = new UserService(NAME_SERVER);
+        UserService userService = new UserService();
         CommandParser parser = new CommandParser(userService);
         parser.setDebug(debug_flag);
         parser.parseInput();

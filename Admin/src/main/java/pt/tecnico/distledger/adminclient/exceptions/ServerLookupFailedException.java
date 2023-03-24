@@ -11,4 +11,8 @@ public class ServerLookupFailedException extends Exception {
         super(String.format("Lookup for %s failed", server), cause);
         this.server = server;
     }
+
+    public String getServer() {
+        return server;
+    }
 }

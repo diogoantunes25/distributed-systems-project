@@ -1,25 +1,23 @@
 package pt.tecnico.distledger.server;
 
-import io.grpc.Server;
-import io.grpc.ServerBuilder;
-import pt.tecnico.distledger.server.domain.ServerState;
-import pt.tecnico.distledger.server.exceptions.ServerUnregistrationFailedException;
-import pt.tecnico.distledger.server.exceptions.ServerRegistrationFailedException;
-import pt.tecnico.distledger.server.grpc.AdminServiceImpl;
-import pt.tecnico.distledger.server.grpc.CrossServerServiceImpl;
-import pt.tecnico.distledger.server.grpc.UserServiceImpl;
-import pt.tecnico.distledger.server.grpc.NamingServiceClient;
-
 import java.io.IOException;
 import java.util.concurrent.locks.ReentrantLock;
 
+import io.grpc.Server;
+import io.grpc.ServerBuilder;
+
+import pt.tecnico.distledger.namingserver.exceptions.ServerRegistrationFailedException;
+import pt.tecnico.distledger.namingserver.exceptions.ServerUnregistrationFailedException;
+import pt.tecnico.distledger.namingserver.grpc.NamingServiceClient;
+import pt.tecnico.distledger.server.domain.ServerState;
+import pt.tecnico.distledger.server.grpc.AdminServiceImpl;
+import pt.tecnico.distledger.server.grpc.CrossServerServiceImpl;
+import pt.tecnico.distledger.server.grpc.UserServiceImpl;
+import pt.tecnico.distledger.namingserver.NamingServer;
 
 public class ServerMain {
 
-    private static final String SERVICE_NAME = "DistLedger";
-    private static final String HOST_NAME = "localhost";
-
-    public static void main(String[] args) {
+    public void main(String[] args) {
 
         if (args.length < 2) {
             System.err.println("Argument(s) missing!");
@@ -29,10 +27,12 @@ public class ServerMain {
 
         final int port = Integer.parseInt(args[0]);
         final String qual = args[1];
-        final String target = HOST_NAME + ":" + port;
+        final String target = "localhost:" + port;
+
+        NamingServiceClient namingServiceClient = new NamingServiceClient();
 
         try {
-            NamingServiceClient.register(SERVICE_NAME, qual, target);
+            namingServiceClient.register(NamingServer.SERVICE_NAME, qual, target);
 
             ReentrantLock lock = new ReentrantLock();
             ServerState state = new ServerState();
@@ -44,7 +44,7 @@ public class ServerMain {
 
             Runtime.getRuntime().addShutdownHook(new Thread(() -> {
                 try {
-                    NamingServiceClient.remove(SERVICE_NAME, target);
+                    namingServiceClient.remove(NamingServer.SERVICE_NAME, target);
                 } catch (ServerUnregistrationFailedException e) {
                     e.printStackTrace();
                 }
@@ -56,7 +56,7 @@ public class ServerMain {
 
             server.awaitTermination();
 
-            NamingServiceClient.remove(SERVICE_NAME, target);
+            namingServiceClient.remove(NamingServer.SERVICE_NAME, target);
 
         } catch (ServerRegistrationFailedException e) {
             System.out.println("Could not register server. Exiting.");

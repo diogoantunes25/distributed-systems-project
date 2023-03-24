@@ -10,26 +10,24 @@ import io.grpc.StatusRuntimeException;
 import pt.ulisboa.tecnico.distledger.contract.DistLedgerCommonDefinitions.LedgerState;
 import pt.ulisboa.tecnico.distledger.contract.distledgerserver.CrossServerDistLedger.*;
 import pt.ulisboa.tecnico.distledger.contract.distledgerserver.DistLedgerCrossServerServiceGrpc;
-
 import pt.tecnico.distledger.server.domain.ServerState;
 import pt.tecnico.distledger.server.domain.operation.Operation;
 import pt.tecnico.distledger.server.exceptions.CannotPropagateStateException;
 import pt.tecnico.distledger.server.exceptions.NoSecundaryServersException;
 import pt.tecnico.distledger.server.visitor.MessageConverterVisitor;
+import pt.tecnico.distledger.namingserver.grpc.NamingServiceClient;
+import pt.tecnico.distledger.namingserver.NamingServer;
 
 public class CrossServerClient {
-    private final String SERVICE_NAME = "DistLedger";
 
-    private static final String PRIMARY_QUAL = "A";
-    private static final String SECONDARY_QUAL = "B";
-
-    private static final Integer TIMEOUT = 500;
+    private static final Integer TIMEOUT = 100; // miliseconds
 
     private ServerState state;
     private final String qual;
     private String cachedServer;
     private Integer cachedServerStateSize;
     private ManagedChannel cachedChannel;
+    private NamingServiceClient namingServiceClient = new NamingServiceClient();
 
     public CrossServerClient(ServerState state, String qual) {
         this.cachedServer = null;
@@ -40,7 +38,7 @@ public class CrossServerClient {
     }
 
     public boolean canWrite() {
-        return qual.equals(PRIMARY_QUAL);
+        return qual.equals(NamingServer.PRIMARY_QUAL);
     }
 
     private void cacheUpdate(String server, Integer size, ManagedChannel channel){
@@ -54,7 +52,7 @@ public class CrossServerClient {
     }
 
     private void cacheRefresh() throws NoSecundaryServersException {
-        List<String> secondaryServers = NamingServiceClient.lookup(SERVICE_NAME, SECONDARY_QUAL);
+        List<String> secondaryServers = namingServiceClient.lookup(NamingServer.SERVICE_NAME, NamingServer.SECONDARY_QUAL);
         if (secondaryServers.isEmpty()) {
             throw new NoSecundaryServersException();
         }

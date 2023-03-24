@@ -4,6 +4,7 @@ import pt.tecnico.distledger.adminclient.exceptions.InvalidQualifierException;
 import pt.tecnico.distledger.adminclient.exceptions.ServerLookupFailedException;
 import pt.tecnico.distledger.adminclient.exceptions.ServerUnavailableException;
 import pt.tecnico.distledger.adminclient.grpc.AdminService;
+import pt.tecnico.distledger.namingserver.NamingServer;
 
 import java.util.Scanner;
 
@@ -18,9 +19,6 @@ public class CommandParser {
     private static final String GOSSIP = "gossip";
     private static final String HELP = "help";
     private static final String EXIT = "exit";
-
-    private static final String PRIMARY_QUAL = "A";
-    private static final String SECONDARY_QUAL = "B";
 
     private final AdminService adminService;
 
@@ -38,7 +36,7 @@ public class CommandParser {
 	}
 
     private void assertValidQualifier(String qual) throws InvalidQualifierException {
-        if (!qual.equals(PRIMARY_QUAL) && !qual.equals(SECONDARY_QUAL)) {
+        if (!qual.equals(NamingServer.PRIMARY_QUAL) && !qual.equals(NamingServer.SECONDARY_QUAL)) {
             throw new InvalidQualifierException(qual);
         }
     }
@@ -85,12 +83,11 @@ public class CommandParser {
                 }
 
             } catch (InvalidQualifierException e) {
-                System.out.println(String.format("Qualifier '%s' is invalid - must be '%s' or '%s'.", e.getQual(), PRIMARY_QUAL, SECONDARY_QUAL));
+                System.out.println(String.format("Qualifier '%s' is invalid - must be '%s' or '%s'.", e.getQual(), NamingServer.PRIMARY_QUAL, NamingServer.SECONDARY_QUAL));
             } catch (ServerUnavailableException e) {
                 System.out.println(String.format("Server is currently unavailable. For writes, you can use the other server."));
             } catch (ServerLookupFailedException e) {
-                // TODO: User constant for service name
-                System.out.println(String.format("Can't find any server with provided qualifier for service '%s'", "DistLedger"));
+                System.out.println(String.format("Can't find any server with provided qualifier for service '%s'", NamingServer.SERVICE_NAME));
             } catch (Exception e) {
                 System.err.println(e.getMessage());
             }
