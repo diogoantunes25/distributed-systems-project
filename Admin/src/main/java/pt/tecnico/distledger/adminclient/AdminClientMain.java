@@ -32,10 +32,13 @@ public class AdminClientMain {
         final int port = Integer.parseInt(args[1]);
         final String target = host + ":" + port;
         debug("target = " + target);
-
-        CommandParser parser = new CommandParser(new AdminService(target));
+        AdminService adminService = new AdminService(target);
+        CommandParser parser = new CommandParser(adminService);
         parser.setDebug(DEBUG_FLAG);
         parser.parseInput();
 
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            adminService.delete();
+        }));
     }
 }

@@ -29,8 +29,13 @@ public class UserClientMain {
             }
         }
 
-        CommandParser parser = new CommandParser(new UserService(NAME_SERVER));
+        UserService userService = new UserService(NAME_SERVER);
+        CommandParser parser = new CommandParser(userService);
         parser.setDebug(debug_flag);
         parser.parseInput();
+
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            userService.delete();
+        }));
     }
 }
