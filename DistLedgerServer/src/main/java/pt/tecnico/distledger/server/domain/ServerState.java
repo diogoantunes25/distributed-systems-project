@@ -117,34 +117,14 @@ public class ServerState {
         }
     }
 
-    public synchronized void updateLedger(List<Operation> proposedLedger) 
-            throws ServerUnavailableException {
+    public synchronized void updateLedger(List<Operation> newOperations, int newStart) 
+            throws ServerUnavailableException, InvalidLedgerException {
         assertIsActive();
-
-        // Guarantees I don't update to older ledger (because ledger is append-only)
-        if (proposedLedger.size() <= this.ledger.size()) {
-            return;
-        }
-
-        Map<String, Account> oldAccounts = this.accounts;
-        List<Operation> oldLedger = this.ledger;
-
-        this.ledger = new ArrayList<>();
-        accounts = new HashMap<>();
-        Account broker = Account.getBroker();
-        this.accounts.put(broker.getUserId(), broker);
 
         // Replay all actions
         ExecutorVisitor visitor = new ExecutorVisitor(this);
-        try {
-            System.out.println(proposedLedger.size());
-            for (Operation op : proposedLedger)
-                op.accept(visitor);
-        } catch (InvalidLedgerException e) {
-            accounts = oldAccounts;
-            ledger = oldLedger;
-            throw e;
-        }
+        for (Operation op : newOperations.subList(this.ledger.size() - newStart, newOperations.size()))
+            op.accept(visitor);
     }
 
 

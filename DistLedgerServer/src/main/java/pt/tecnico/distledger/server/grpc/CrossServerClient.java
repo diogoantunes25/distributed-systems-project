@@ -77,7 +77,6 @@ public class CrossServerClient {
         ledgerState.add(op);
         
         LedgerState.Builder ledgerStateBuilder = LedgerState.newBuilder();
-        System.out.println(cachedServerStateSize + "," + ledgerState.size());
         ledgerState.subList(cachedServerStateSize, ledgerState.size())
                 .forEach(o -> ledgerStateBuilder.addLedger(o.accept(visitor)));
         

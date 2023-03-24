@@ -17,7 +17,6 @@ public class ExecutorVisitor implements Visitor<Void>{
     @Override
     public Void visit(CreateOp op) {
         try {
-            System.out.println(op.getAccount());
             state.createAccount(op.getAccount());
         } catch (AccountAlreadyExistsException e) {
             e.printStackTrace();
@@ -30,7 +29,6 @@ public class ExecutorVisitor implements Visitor<Void>{
     @Override
     public Void visit(DeleteOp op) {
         try {
-            System.out.println(op.getAccount());
             state.deleteAccount(op.getAccount());
         } catch (AccountDoesNotExistException | BalanceNotZeroException | BrokerCannotBeDeletedException e) {
             e.printStackTrace();
@@ -43,7 +41,6 @@ public class ExecutorVisitor implements Visitor<Void>{
     @Override
     public Void visit(TransferOp op) {
         try {
-            System.out.println(op.getAccount() + " " + op.getDestAccount() + " " + op.getAmount());
             state.transferTo(op.getAccount(), op.getDestAccount(), op.getAmount());
         } catch (AccountDoesNotExistException | NotEnoughBalanceException |
                  InvalidTransferAmountException e) {

@@ -34,10 +34,8 @@ public class NamingServiceClient {
                 .setQualifier(serverQualifier)
                 .setAddress(serverAddress)
                 .build();
-            System.out.println(request);
     
-            RegisterResponse response = stub.withDeadlineAfter(TIMEOUT, TimeUnit.MILLISECONDS).register(request);
-            System.out.println(response);
+            stub.withDeadlineAfter(TIMEOUT, TimeUnit.MILLISECONDS).register(request);
         } catch (StatusRuntimeException e) {
             throw new ServerRegistrationFailedException(serverAddress, serverQualifier, serviceName, e);
         }

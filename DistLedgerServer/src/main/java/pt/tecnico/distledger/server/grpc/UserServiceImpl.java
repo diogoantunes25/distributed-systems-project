@@ -42,8 +42,6 @@ public class UserServiceImpl extends UserServiceGrpc.UserServiceImplBase {
 
     @Override
     public void createAccount(CreateAccountRequest request, StreamObserver<CreateAccountResponse> responseObserver) {
-        System.out.println(request);
-
         if (crossServerService.canWrite()) {
             try {
                 String userID = request.getUserId();
@@ -82,8 +80,6 @@ public class UserServiceImpl extends UserServiceGrpc.UserServiceImplBase {
 
     @Override
     public void deleteAccount(DeleteAccountRequest request, StreamObserver<DeleteAccountResponse> responseObserver) {
-        System.out.println(request);
-
         if (crossServerService.canWrite()) {
             try {
                 String userID = request.getUserId();
@@ -130,8 +126,6 @@ public class UserServiceImpl extends UserServiceGrpc.UserServiceImplBase {
     
     @Override
     public void balance(BalanceRequest request, StreamObserver<BalanceResponse> responseObserver) {
-        System.out.println(request);
-
         try {
             String userID = request.getUserId();
             Integer balance = state.getBalance(userID);
@@ -154,8 +148,6 @@ public class UserServiceImpl extends UserServiceGrpc.UserServiceImplBase {
 
     @Override
     public void transferTo(TransferToRequest request, StreamObserver<TransferToResponse> responseObserver) {
-        System.out.println(request);
-
         if (crossServerService.canWrite()) {
             try {
                 String userID = request.getAccountFrom();

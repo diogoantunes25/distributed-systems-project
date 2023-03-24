@@ -37,7 +37,6 @@ public abstract class Service {
             System.out.println("WARNING: More than one secondary server found");
         }
 
-        System.out.println("Updating cache for " + qual + " with " + servers.get(0) + ".");
         cacheUpdate(qual, ManagedChannelBuilder.forTarget(servers.get(0)).usePlaintext().build());
     }
 

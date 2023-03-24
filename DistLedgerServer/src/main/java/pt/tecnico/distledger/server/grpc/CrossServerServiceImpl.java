@@ -1,5 +1,6 @@
 package pt.tecnico.distledger.server.grpc;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import io.grpc.Status;
@@ -29,19 +30,18 @@ public class CrossServerServiceImpl extends DistLedgerCrossServerServiceGrpc.Dis
 
     @Override
     public void propagateState(PropagateStateRequest request, StreamObserver<PropagateStateResponse> responseStreamObserver) {
-        System.out.println(request);
-        List<Operation> ledger = state.getLedgerState().subList(0, request.getStart());
+        List<Operation> newOperations = new ArrayList<>();
 
         request.getState().getLedgerList().forEach(op -> {
             switch (op.getType()) {
                 case OP_TRANSFER_TO:
-                    ledger.add(new TransferOp(op.getUserId(), op.getDestUserId(), op.getAmount()));
+                    newOperations.add(new TransferOp(op.getUserId(), op.getDestUserId(), op.getAmount()));
                     break;
                 case OP_CREATE_ACCOUNT:
-                    ledger.add(new CreateOp(op.getUserId()));
+                    newOperations.add(new CreateOp(op.getUserId()));
                     break;
                 case OP_DELETE_ACCOUNT:
-                    ledger.add(new DeleteOp(op.getUserId()));
+                    newOperations.add(new DeleteOp(op.getUserId()));
                     break;
                 default:
                     responseStreamObserver.onError(Status.INVALID_ARGUMENT.withDescription(INVALID_LEDGER_STATE).asRuntimeException());
@@ -49,7 +49,7 @@ public class CrossServerServiceImpl extends DistLedgerCrossServerServiceGrpc.Dis
         });
 
         try {
-            state.updateLedger(ledger);
+            state.updateLedger(newOperations, request.getStart());
 
             responseStreamObserver.onNext(PropagateStateResponse.newBuilder().build());
             responseStreamObserver.onCompleted();
