@@ -19,7 +19,6 @@ public class ExecutorVisitor implements Visitor<Void>{
         try {
             state.createAccount(op.getAccount());
         } catch (AccountAlreadyExistsException e) {
-            e.printStackTrace();
             throw new InvalidLedgerException(state, e);
         }
 
@@ -31,7 +30,6 @@ public class ExecutorVisitor implements Visitor<Void>{
         try {
             state.deleteAccount(op.getAccount());
         } catch (AccountDoesNotExistException | BalanceNotZeroException | BrokerCannotBeDeletedException e) {
-            e.printStackTrace();
             throw new InvalidLedgerException(state, e);
         }
 
@@ -44,7 +42,6 @@ public class ExecutorVisitor implements Visitor<Void>{
             state.transferTo(op.getAccount(), op.getDestAccount(), op.getAmount());
         } catch (AccountDoesNotExistException | NotEnoughBalanceException |
                  InvalidTransferAmountException e) {
-            e.printStackTrace();
             throw new InvalidLedgerException(state, e);
         }
 

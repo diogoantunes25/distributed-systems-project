@@ -54,10 +54,8 @@ public class CrossServerServiceImpl extends DistLedgerCrossServerServiceGrpc.Dis
             responseStreamObserver.onNext(PropagateStateResponse.newBuilder().build());
             responseStreamObserver.onCompleted();
         } catch (InvalidLedgerException e) {
-            e.printStackTrace();
             responseStreamObserver.onError(Status.INVALID_ARGUMENT.withDescription(INVALID_LEDGER_STATE).asRuntimeException());
         } catch (ServerUnavailableException e) {
-            e.printStackTrace();
             responseStreamObserver.onError(Status.UNAVAILABLE.withDescription(SERVER_UNAVAILABLE).asRuntimeException());
         }
     }

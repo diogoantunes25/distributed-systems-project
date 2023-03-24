@@ -65,7 +65,6 @@ public class UserServiceImpl extends UserServiceGrpc.UserServiceImplBase {
 
             } catch (ServerUnavailableException | NoSecundaryServersException | CannotPropagateStateException e) {
                 System.err.println(SERVER_UNAVAILABLE);
-                e.printStackTrace();
                 responseObserver.onError(Status.UNAVAILABLE.withDescription(SERVER_UNAVAILABLE).asRuntimeException());
 
             } catch (StatusRuntimeException e) {
@@ -111,7 +110,6 @@ public class UserServiceImpl extends UserServiceGrpc.UserServiceImplBase {
 
             } catch (ServerUnavailableException | NoSecundaryServersException | CannotPropagateStateException e) {
                 System.err.println(SERVER_UNAVAILABLE);
-                e.printStackTrace();
                 responseObserver.onError(Status.UNAVAILABLE.withDescription(SERVER_UNAVAILABLE).asRuntimeException());
 
             } catch (StatusRuntimeException e) {
@@ -140,7 +138,6 @@ public class UserServiceImpl extends UserServiceGrpc.UserServiceImplBase {
 
         } catch (ServerUnavailableException e) {
             System.err.println(SERVER_UNAVAILABLE);
-            e.printStackTrace();
             responseObserver.onError(Status.UNAVAILABLE.withDescription(SERVER_UNAVAILABLE).asRuntimeException());
         }
 
@@ -181,7 +178,6 @@ public class UserServiceImpl extends UserServiceGrpc.UserServiceImplBase {
 
             } catch (ServerUnavailableException | NoSecundaryServersException | CannotPropagateStateException e) {
                 System.err.println(SERVER_UNAVAILABLE);
-                e.printStackTrace();
                 responseObserver.onError(Status.UNAVAILABLE.withDescription(SERVER_UNAVAILABLE).asRuntimeException());
 
             } catch (StatusRuntimeException e) {
