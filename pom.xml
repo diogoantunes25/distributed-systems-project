@@ -17,9 +17,22 @@
 		<module>User</module>
 		<module>Admin</module>
 		<module>DistLedgerServer</module>
+		<module>NamingServer</module>
 
 		<!-- This one should only be used in phases 2 and 3
 		 <module>NamingServer</module>-->
 	</modules>
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <source>8</source>
+                    <target>8</target>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
 
 </project>

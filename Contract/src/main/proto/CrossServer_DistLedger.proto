@@ -9,7 +9,7 @@ message PropagateStateRequest {
   LedgerState state = 1;
 }
 
-message PropagateStateResponse {}
+message PropagateStateResponse { }
 
 service DistLedgerCrossServerService {
   rpc propagateState(PropagateStateRequest) returns (PropagateStateResponse);
