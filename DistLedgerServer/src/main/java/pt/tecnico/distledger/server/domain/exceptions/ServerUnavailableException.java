@@ -1,3 +1,3 @@
 package pt.tecnico.distledger.server.domain.exceptions;
 
-public class ServerUnavailableException extends DistLedgerException {}
+public class ServerUnavailableException extends DistLedgerRuntimeException {}

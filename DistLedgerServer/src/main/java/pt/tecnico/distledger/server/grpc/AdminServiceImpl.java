@@ -1,5 +1,7 @@
 package pt.tecnico.distledger.server.grpc;
 
+import java.util.concurrent.locks.ReentrantLock;
+
 import io.grpc.stub.StreamObserver;
 
 import pt.tecnico.distledger.server.domain.ServerState;
@@ -11,14 +13,22 @@ import pt.ulisboa.tecnico.distledger.contract.admin.AdminServiceGrpc;
 public class AdminServiceImpl extends AdminServiceGrpc.AdminServiceImplBase{
 
     private ServerState state;
+    private ReentrantLock lock;
 
-    public AdminServiceImpl(ServerState state) {
+    public AdminServiceImpl(ServerState state, ReentrantLock lock) {
         this.state = state;
+        this.lock = lock;
     }
 
     @Override
     public void activate(ActivateRequest request, StreamObserver<ActivateResponse> responseObserver) {
-        state.activate();
+        try {
+            lock.lock();
+            state.activate();
+        } finally {
+            lock.unlock();
+        }
+
         ActivateResponse response = ActivateResponse.newBuilder().build();
         responseObserver.onNext(response);
         responseObserver.onCompleted();
@@ -26,7 +36,13 @@ public class AdminServiceImpl extends AdminServiceGrpc.AdminServiceImplBase{
 
     @Override
     public void deactivate(DeactivateRequest request, StreamObserver<DeactivateResponse> responseObserver) {
-        state.deactivate();
+        try {
+            lock.lock();
+            state.deactivate();
+        } finally {
+            lock.unlock();
+        }
+
         DeactivateResponse response = DeactivateResponse.newBuilder().build();
         responseObserver.onNext(response);
         responseObserver.onCompleted();
@@ -42,13 +58,16 @@ public class AdminServiceImpl extends AdminServiceGrpc.AdminServiceImplBase{
 
     @Override
     public void getLedgerState(getLedgerStateRequest request, StreamObserver<getLedgerStateResponse> responseObserver) {
-        // TODO: is this synchronized?
-        LedgerState.Builder ledger = LedgerState.newBuilder();
-        state.getLedgerState().stream()
-              .map(o -> o.accept(new MessageConverterVisitor()))
-              .forEach(v -> ledger.addLedger(v));
+        MessageConverterVisitor visitor = new MessageConverterVisitor();
 
-        getLedgerStateResponse response = getLedgerStateResponse.newBuilder().setLedgerState(ledger).build();
+        LedgerState.Builder ledgerStateBuilder = LedgerState.newBuilder();
+        state.getLedgerState().stream()
+              .forEach(o -> ledgerStateBuilder.addLedger(o.accept(visitor)));
+
+        getLedgerStateResponse response = getLedgerStateResponse.newBuilder()
+                .setLedgerState(ledgerStateBuilder.build())
+                .build();
+
         responseObserver.onNext(response);
         responseObserver.onCompleted();
     }

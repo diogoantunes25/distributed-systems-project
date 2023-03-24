@@ -2,7 +2,7 @@ package pt.tecnico.distledger.server.domain.exceptions;
 
 import pt.tecnico.distledger.server.domain.ServerState;
 
-public class InvalidLedgerException extends RuntimeException {
+public class InvalidLedgerException extends DistLedgerRuntimeException {
     private ServerState state;
 
     public InvalidLedgerException(ServerState state, Throwable cause) {

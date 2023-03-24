@@ -27,16 +27,21 @@ public class ServerState {
         this.accounts.put(broker.getUserId(), broker);
     }
 
-    public void createAccount(String userId)
-            throws AccountAlreadyExistsException, ServerUnavailableException {
+    public void assertIsActive() throws ServerUnavailableException {
         if (!active.get()) {
             throw new ServerUnavailableException();
         }
-
-        _createAccount(userId);
     }
 
-    public void assertCanCreateAccount(String userId)
+    public synchronized void createAccount(String userId)
+            throws AccountAlreadyExistsException, ServerUnavailableException {
+        assertIsActive();
+        assertCanCreateAccount(userId);
+        accounts.put(userId, new Account(userId));
+        ledger.add(new CreateOp(userId));
+    }
+
+    public synchronized void assertCanCreateAccount(String userId)
             throws AccountAlreadyExistsException {
 
         if (accounts.containsKey(userId)) {
@@ -44,26 +49,16 @@ public class ServerState {
         }
     }
 
-    public synchronized void _createAccount(String userId)
-            throws AccountAlreadyExistsException {
-
-        assertCanCreateAccount(userId);
-        accounts.put(userId, new Account(userId));
-        ledger.add(new CreateOp(userId));
-    }
-
-    public void deleteAccount(String userId)
+    public synchronized void deleteAccount(String userId)
             throws AccountDoesNotExistException, BalanceNotZeroException,
             ServerUnavailableException, BrokerCannotBeDeletedException {
-
-        if (!active.get()) {
-            throw new ServerUnavailableException();
-        }
-
-        _deleteAccount(userId);
+        assertIsActive();
+        assertCanDeleteAccount(userId);
+        accounts.remove(userId);
+        ledger.add(new DeleteOp(userId));
     }
 
-    public void assertCanDeleteAccount(String userId) throws AccountDoesNotExistException, BalanceNotZeroException,
+    public synchronized void assertCanDeleteAccount(String userId) throws AccountDoesNotExistException, BalanceNotZeroException,
             BrokerCannotBeDeletedException {
 
         if (!accounts.containsKey(userId)) {
@@ -80,25 +75,14 @@ public class ServerState {
         }
     }
 
-
-    public synchronized void _deleteAccount(String userId)
-            throws AccountDoesNotExistException, BalanceNotZeroException,
-            BrokerCannotBeDeletedException {
-
-        assertCanDeleteAccount(userId);
-        accounts.remove(userId);
-        ledger.add(new DeleteOp(userId));
-    }
-
-    public void transferTo(String accountFrom, String accountTo, int amount)
+    public synchronized void transferTo(String accountFrom, String accountTo, int amount)
             throws AccountDoesNotExistException, NotEnoughBalanceException, ServerUnavailableException,
             InvalidTransferAmountException {
-
-        if (!active.get()) {
-            throw new ServerUnavailableException();
-        }
-
-        _transferTo(accountFrom, accountTo, amount);
+        assertIsActive();
+        assertCanTransferTo(accountFrom, accountTo, amount);
+        accounts.get(accountFrom).decreaseBalance(amount);
+        accounts.get(accountTo).increaseBalance(amount);
+        ledger.add(new TransferOp(accountFrom, accountFrom, amount));
     }
 
     public synchronized void assertCanTransferTo(String accountFrom, String accountTo, int amount)
@@ -114,29 +98,19 @@ public class ServerState {
         if (amount <= 0) {
             throw new InvalidTransferAmountException(amount);
         }
-
-    }
-
-    public synchronized void _transferTo(String accountFrom, String accountTo, int amount)
-        throws AccountDoesNotExistException, NotEnoughBalanceException, InvalidTransferAmountException {
-
-        assertCanTransferTo(accountFrom, accountTo, amount);
-        accounts.get(accountFrom).decreaseBalance(amount);
-        accounts.get(accountTo).increaseBalance(amount);
-        ledger.add(new TransferOp(accountFrom, accountFrom, amount));
     }
 
     public synchronized int getBalance(String userId)
-        throws AccountDoesNotExistException, ServerUnavailableException {
-        if (!active.get()) {
-            throw new ServerUnavailableException();
-        }
+            throws AccountDoesNotExistException, ServerUnavailableException {
+        assertIsActive();
+        assertCanGetBalance(userId);
+        return accounts.get(userId).getBalance();
+    }
 
+    public synchronized void assertCanGetBalance(String userId) throws AccountDoesNotExistException {
         if (!accounts.containsKey(userId)) {
             throw new AccountDoesNotExistException(userId);
         }
-
-        return accounts.get(userId).getBalance();
     }
 
     public synchronized void updateLedger(List<Operation> proposedLedger) 
@@ -183,8 +157,11 @@ public class ServerState {
         active.set(false);
     }
 
-    // TODO: is this synchronized?
-    public List<Operation> getLedgerState() {
-        return ledger;
+    public synchronized List<Operation> getLedgerState() {
+        List<Operation> ledgerCopy = new ArrayList<>();
+        for (Operation op: ledger) {
+            ledgerCopy.add(op);
+        }
+        return ledgerCopy;
     }
 }

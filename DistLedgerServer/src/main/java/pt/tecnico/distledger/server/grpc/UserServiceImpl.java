@@ -1,5 +1,7 @@
 package pt.tecnico.distledger.server.grpc;
 
+import java.util.concurrent.locks.ReentrantLock;
+
 import io.grpc.*;
 import io.grpc.stub.StreamObserver;
 
@@ -15,7 +17,8 @@ public class UserServiceImpl extends UserServiceGrpc.UserServiceImplBase {
 
     
     private ServerState state;
-    private CrossServerService crossServerService;
+    private CrossServerClient crossServerService;
+    private ReentrantLock lock;
 
     final String ACCOUNT_ALREADY_EXISTS = "This Account Already Exists";
     final String ACCOUNT_DOES_NOT_EXIST = "This Account Does Not Exist";
@@ -28,9 +31,10 @@ public class UserServiceImpl extends UserServiceGrpc.UserServiceImplBase {
     final String INTERNAL_ERROR = "Internal Error";
 
 
-    public UserServiceImpl(ServerState state, String qual) {
+    public UserServiceImpl(ServerState state, String qual, ReentrantLock lock) {
         this.state = state;
-        this.crossServerService = new CrossServerService(state, qual);
+        this.crossServerService = new CrossServerClient(state, qual);
+        this.lock = lock;
     }
 
     @Override
@@ -40,10 +44,13 @@ public class UserServiceImpl extends UserServiceGrpc.UserServiceImplBase {
             try {
                 String userID = request.getUserId();
 
-                synchronized (this) {
+                try {
+                    lock.lock();
                     state.assertCanCreateAccount(userID);
                     crossServerService.propagateState();
                     state.createAccount(userID);
+                } finally {
+                    lock.unlock();
                 }
 
                 CreateAccountResponse response = CreateAccountResponse.newBuilder().build();
@@ -75,10 +82,13 @@ public class UserServiceImpl extends UserServiceGrpc.UserServiceImplBase {
             try {
                 String userID = request.getUserId();
 
-                synchronized (this) {
+                try {
+                    lock.lock();
                     state.assertCanDeleteAccount(userID);
                     crossServerService.propagateState();
                     state.deleteAccount(userID);
+                } finally {
+                    lock.unlock();
                 }
 
                 DeleteAccountResponse response = DeleteAccountResponse.newBuilder().build();
@@ -142,10 +152,13 @@ public class UserServiceImpl extends UserServiceGrpc.UserServiceImplBase {
                 String dest = request.getAccountTo();
                 Integer amount = request.getAmount();
 
-                synchronized (this) {
+                try {
+                    lock.lock();
                     state.assertCanTransferTo(userID, dest, amount);
                     crossServerService.propagateState();
                     state.transferTo(userID, dest, amount);
+                } finally {
+                    lock.unlock();
                 }
 
                 TransferToResponse response = TransferToResponse.newBuilder().build();

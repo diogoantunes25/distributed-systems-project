@@ -1,6 +1,7 @@
 package pt.tecnico.distledger.server.grpc;
 
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
@@ -16,18 +17,20 @@ import pt.tecnico.distledger.server.exceptions.CannotPropagateStateException;
 import pt.tecnico.distledger.server.exceptions.NoSecundaryServersException;
 import pt.tecnico.distledger.server.visitor.MessageConverterVisitor;
 
-public class CrossServerService {
+public class CrossServerClient {
     private final String SERVICE_NAME = "DistLedger";
 
     private static final String PRIMARY_QUAL = "A";
     private static final String SECONDARY_QUAL = "B";
+
+    private static final Integer TIMEOUT = 500;
 
     private ServerState state;
     private final String qual;
     private String cachedServer;
     private Integer cachedServerStateSize;
 
-    public CrossServerService(ServerState state, String qual) {
+    public CrossServerClient(ServerState state, String qual) {
         this.cachedServer = null;
         this.cachedServerStateSize = 0;
         this.state = state;
@@ -43,27 +46,26 @@ public class CrossServerService {
         this.cachedServerStateSize = size;
     }
     
-    private boolean isUpdatedCache() {
-        return cachedServer != null && cachedServerStateSize == state.getLedgerState().size();
-    }
-
     private boolean isEmptyCache() {
         return cachedServer == null;
     }
 
     private void cacheRefresh() throws NoSecundaryServersException {
-        List<String> secondaryServers = NamingService.lookup(SERVICE_NAME, SECONDARY_QUAL);
+        List<String> secondaryServers = NamingServiceClient.lookup(SERVICE_NAME, SECONDARY_QUAL);
         if (secondaryServers.isEmpty()) {
             throw new NoSecundaryServersException();
         }
-        // We assume there is only one secondary server active at every moment
+
+        if (secondaryServers.size() > 1){
+            // We assume there is only one secondary server active at every moment
+            System.out.println("WARNING: More than one secondary server found");
+        }
+
         cacheUpdate(secondaryServers.get(0), 0);
     }
 
     private void tryPropagateState() 
-            throws NoSecundaryServersException, StatusRuntimeException {
-        if(isEmptyCache()) cacheRefresh();
-
+            throws NoSecundaryServersException, CannotPropagateStateException {
         ManagedChannel channel = ManagedChannelBuilder.forTarget(cachedServer).usePlaintext().build();
         DistLedgerCrossServerServiceGrpc.DistLedgerCrossServerServiceBlockingStub stub = DistLedgerCrossServerServiceGrpc.newBlockingStub(channel);
 
@@ -77,26 +79,28 @@ public class CrossServerService {
         PropagateStateRequest request = PropagateStateRequest.newBuilder()
                 .setState(ledgerStateBuilder.build())
                 .build();
-        
-        stub.propagateState(request);
-        cacheUpdate(cachedServer, ledgerState.size());
-    }
 
-    // TODO: pay special atention to this section
-    public void propagateState() 
-            throws NoSecundaryServersException, CannotPropagateStateException {
         try {
-            tryPropagateState();
+            stub.withDeadlineAfter(TIMEOUT, TimeUnit.MILLISECONDS).propagateState(request);
         } catch (StatusRuntimeException e) {
-            cacheUpdate(null, 0);
+            throw new CannotPropagateStateException(cachedServer, e);
+        } finally {
+            channel.shutdown();
         }
 
-        if (!isUpdatedCache()) {
-            try {
-                tryPropagateState();
-            } catch (StatusRuntimeException e) {
-                throw new CannotPropagateStateException();
-            }
+    }
+
+    public void propagateState() 
+            throws NoSecundaryServersException, CannotPropagateStateException {
+        if(isEmptyCache()) cacheRefresh();
+
+        try {
+            tryPropagateState();
+            cacheUpdate(cachedServer, state.getLedgerState().size());
+        } catch (CannotPropagateStateException e) {
+            cacheRefresh();
+            tryPropagateState();
+            cacheUpdate(cachedServer, state.getLedgerState().size());
         }
     }
 }
