@@ -47,7 +47,9 @@ public class NamingServer {
         if (service == null) {
             service = new ServiceEntry(serviceName);
             services.put(serviceName, service);
-        } else {
+        }
+
+        if (service.hasServer(hostname, port)) {
             throw new CannotRegisterException(serviceName, hostname, port);
         }
 

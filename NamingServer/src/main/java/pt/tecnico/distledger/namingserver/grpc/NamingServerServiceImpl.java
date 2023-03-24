@@ -26,6 +26,7 @@ public class NamingServerServiceImpl extends NamingServiceGrpc.NamingServiceImpl
     @Override
     public void register(RegisterRequest request, StreamObserver<RegisterResponse> responseObserver) {
         try {
+            System.out.println(request);
             String serviceName = request.getServiceName();
             String serverQualifier = request.getQualifier();
             String serverAddress = request.getAddress();

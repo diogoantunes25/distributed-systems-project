@@ -15,7 +15,7 @@ import pt.ulisboa.tecnico.distledger.contract.distledgerserver.NamingServiceGrpc
 
 public class NamingServiceClient {
     private static final String NAMING_SERVER_TARGET = "localhost:5001";
-    private final static int TIMEOUT = 100;
+    private static final int TIMEOUT = 5000;
     
     final ManagedChannel channel;
     final NamingServiceGrpc.NamingServiceBlockingStub stub;
@@ -34,8 +34,10 @@ public class NamingServiceClient {
                 .setQualifier(serverQualifier)
                 .setAddress(serverAddress)
                 .build();
+            System.out.println(request);
     
-            stub.withDeadlineAfter(TIMEOUT, TimeUnit.MILLISECONDS).register(request);
+            RegisterResponse response = stub.withDeadlineAfter(TIMEOUT, TimeUnit.MILLISECONDS).register(request);
+            System.out.println(response);
         } catch (StatusRuntimeException e) {
             throw new ServerRegistrationFailedException(serverAddress, serverQualifier, serviceName, e);
         }
