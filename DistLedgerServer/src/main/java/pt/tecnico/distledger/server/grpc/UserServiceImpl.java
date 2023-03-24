@@ -10,6 +10,9 @@ import pt.ulisboa.tecnico.distledger.contract.user.UserServiceGrpc;
 
 import pt.tecnico.distledger.server.domain.ServerState;
 import pt.tecnico.distledger.server.domain.exceptions.*;
+import pt.tecnico.distledger.server.domain.operation.CreateOp;
+import pt.tecnico.distledger.server.domain.operation.DeleteOp;
+import pt.tecnico.distledger.server.domain.operation.TransferOp;
 import pt.tecnico.distledger.server.exceptions.CannotPropagateStateException;
 import pt.tecnico.distledger.server.exceptions.NoSecundaryServersException;
 
@@ -39,6 +42,7 @@ public class UserServiceImpl extends UserServiceGrpc.UserServiceImplBase {
 
     @Override
     public void createAccount(CreateAccountRequest request, StreamObserver<CreateAccountResponse> responseObserver) {
+        System.out.println(request);
 
         if (crossServerService.canWrite()) {
             try {
@@ -47,7 +51,7 @@ public class UserServiceImpl extends UserServiceGrpc.UserServiceImplBase {
                 try {
                     lock.lock();
                     state.assertCanCreateAccount(userID);
-                    crossServerService.propagateState();
+                    crossServerService.propagateState(new CreateOp(userID));
                     state.createAccount(userID);
                 } finally {
                     lock.unlock();
@@ -77,6 +81,7 @@ public class UserServiceImpl extends UserServiceGrpc.UserServiceImplBase {
 
     @Override
     public void deleteAccount(DeleteAccountRequest request, StreamObserver<DeleteAccountResponse> responseObserver) {
+        System.out.println(request);
 
         if (crossServerService.canWrite()) {
             try {
@@ -85,7 +90,7 @@ public class UserServiceImpl extends UserServiceGrpc.UserServiceImplBase {
                 try {
                     lock.lock();
                     state.assertCanDeleteAccount(userID);
-                    crossServerService.propagateState();
+                    crossServerService.propagateState(new DeleteOp(userID));
                     state.deleteAccount(userID);
                 } finally {
                     lock.unlock();
@@ -123,6 +128,7 @@ public class UserServiceImpl extends UserServiceGrpc.UserServiceImplBase {
     
     @Override
     public void balance(BalanceRequest request, StreamObserver<BalanceResponse> responseObserver) {
+        System.out.println(request);
 
         try {
             String userID = request.getUserId();
@@ -145,6 +151,7 @@ public class UserServiceImpl extends UserServiceGrpc.UserServiceImplBase {
 
     @Override
     public void transferTo(TransferToRequest request, StreamObserver<TransferToResponse> responseObserver) {
+        System.out.println(request);
 
         if (crossServerService.canWrite()) {
             try {
@@ -155,7 +162,7 @@ public class UserServiceImpl extends UserServiceGrpc.UserServiceImplBase {
                 try {
                     lock.lock();
                     state.assertCanTransferTo(userID, dest, amount);
-                    crossServerService.propagateState();
+                    crossServerService.propagateState(new TransferOp(userID, dest, amount));
                     state.transferTo(userID, dest, amount);
                 } finally {
                     lock.unlock();

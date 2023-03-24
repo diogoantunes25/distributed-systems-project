@@ -29,6 +29,7 @@ public class CrossServerServiceImpl extends DistLedgerCrossServerServiceGrpc.Dis
 
     @Override
     public void propagateState(PropagateStateRequest request, StreamObserver<PropagateStateResponse> responseStreamObserver) {
+        System.out.println(request);
         List<Operation> ledger = state.getLedgerState();
 
         request.getState().getLedgerList().forEach(op -> {

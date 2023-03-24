@@ -68,12 +68,13 @@ public class CrossServerClient {
         cacheUpdate(secondaryServers.get(0), 0, ManagedChannelBuilder.forTarget(secondaryServers.get(0)).usePlaintext().build());
     }
 
-    private void tryPropagateState() 
+    private void tryPropagateState(Operation op) 
             throws NoSecundaryServersException, CannotPropagateStateException {
         DistLedgerCrossServerServiceGrpc.DistLedgerCrossServerServiceBlockingStub stub = DistLedgerCrossServerServiceGrpc.newBlockingStub(cachedChannel);
 
         MessageConverterVisitor visitor = new MessageConverterVisitor();
         List<Operation> ledgerState = state.getLedgerState();
+        ledgerState.add(op);
         
         LedgerState.Builder ledgerStateBuilder = LedgerState.newBuilder();
         ledgerState.subList(cachedServerStateSize, ledgerState.size())
@@ -91,16 +92,16 @@ public class CrossServerClient {
         }
     }
 
-    public void propagateState() 
+    public void propagateState(Operation op) 
             throws NoSecundaryServersException, CannotPropagateStateException {
         if (isEmptyCache()) cacheRefresh();
 
         try {
-            tryPropagateState();
+            tryPropagateState(op);
             cacheUpdate(cachedServer, state.getLedgerState().size(), cachedChannel); // Just update size stored
         } catch (CannotPropagateStateException e) {
             cacheRefresh();
-            tryPropagateState();
+            tryPropagateState(op);
             cacheUpdate(cachedServer, state.getLedgerState().size(), cachedChannel);
         }
     }

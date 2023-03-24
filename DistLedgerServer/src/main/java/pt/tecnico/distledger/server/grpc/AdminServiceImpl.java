@@ -23,6 +23,7 @@ public class AdminServiceImpl extends AdminServiceGrpc.AdminServiceImplBase{
 
     @Override
     public void activate(ActivateRequest request, StreamObserver<ActivateResponse> responseObserver) {
+        System.out.println(request);
         try {
             lock.lock();
             state.activate();
@@ -37,6 +38,7 @@ public class AdminServiceImpl extends AdminServiceGrpc.AdminServiceImplBase{
 
     @Override
     public void deactivate(DeactivateRequest request, StreamObserver<DeactivateResponse> responseObserver) {
+        System.out.println(request);
         try {
             lock.lock();
             state.deactivate();
@@ -59,6 +61,7 @@ public class AdminServiceImpl extends AdminServiceGrpc.AdminServiceImplBase{
 
     @Override
     public void getLedgerState(getLedgerStateRequest request, StreamObserver<getLedgerStateResponse> responseObserver) {
+        System.out.println(request);
         MessageConverterVisitor visitor = new MessageConverterVisitor();
 
         LedgerState.Builder ledgerStateBuilder = LedgerState.newBuilder();
