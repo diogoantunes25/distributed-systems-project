@@ -42,6 +42,14 @@ public class ServerMain {
                     .addService(new CrossServerServiceImpl(state))
                     .build();
 
+            Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+                try {
+                    NamingServiceClient.remove(SERVICE_NAME, target);
+                } catch (ServerRegistrationFailedException e) {
+                    e.printStackTrace();
+                }
+            }));
+
             server.start();
 
             System.out.println("Server started, listening on " + port);
