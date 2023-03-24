@@ -6,9 +6,9 @@ import java.util.Scanner;
 
 import pt.tecnico.distledger.namingserver.NamingServer;
 
-import pt.tecnico.distledger.userclient.exceptions.InvalidQualifierException;
-import pt.tecnico.distledger.userclient.exceptions.ServerLookupFailedException;
-import pt.tecnico.distledger.userclient.exceptions.ServerUnavailableException;
+import pt.tecnico.distledger.client.exceptions.InvalidQualifierException;
+import pt.tecnico.distledger.client.exceptions.ServerLookupFailedException;
+import pt.tecnico.distledger.client.exceptions.ServerUnavailableException;
 import pt.tecnico.distledger.userclient.grpc.UserService;
 
 public class CommandParser {

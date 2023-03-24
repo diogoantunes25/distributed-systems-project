@@ -15,6 +15,7 @@
 	<modules>
 		<module>Contract</module>
 		<module>NamingServer</module>
+		<module>Client</module>
 		<module>User</module>
 		<module>Admin</module>
 		<module>DistLedgerServer</module>

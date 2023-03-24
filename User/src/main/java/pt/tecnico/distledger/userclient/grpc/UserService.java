@@ -1,55 +1,19 @@
 package pt.tecnico.distledger.userclient.grpc;
 
-import java.util.List;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import io.grpc.ManagedChannel;
-import io.grpc.ManagedChannelBuilder;
 import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
 
 import pt.ulisboa.tecnico.distledger.contract.user.UserServiceGrpc;
 import pt.ulisboa.tecnico.distledger.contract.user.UserDistLedger.*;
-import pt.tecnico.distledger.namingserver.grpc.NamingServiceClient;
-import pt.tecnico.distledger.namingserver.NamingServer;
+import pt.tecnico.distledger.client.grpc.Service;
 
-import pt.tecnico.distledger.userclient.exceptions.ServerLookupFailedException;
-import pt.tecnico.distledger.userclient.exceptions.ServerUnavailableException;
+import pt.tecnico.distledger.client.exceptions.ServerLookupFailedException;
+import pt.tecnico.distledger.client.exceptions.ServerUnavailableException;
 
-public class UserService {
-    private NamingServiceClient namingServiceClient = new NamingServiceClient();
-    private final static int TIMEOUT = 100; // milliseconds
-
-    // Caches ManagedChannel for qualifier
-    private final Map<String, ManagedChannel> serverCache = new HashMap<>();
-
-    private boolean cacheHasServerEntry(String server) {
-        return serverCache.containsKey(server);
-    }
-
-    private void cacheUpdate(String server, ManagedChannel channel) {
-        serverCache.put(server, channel);
-    }
-
-    public void cacheRefresh(String qual) throws ServerLookupFailedException {
-        List<String> servers = this.namingServiceClient.lookup(NamingServer.SERVICE_NAME, qual);
-        if(servers.isEmpty()) {
-            throw new ServerLookupFailedException(qual);
-        }
-
-        if (servers.size() > 1){
-            // We assume there is only one secondary server active at every moment
-            System.out.println("WARNING: More than one secondary server found");
-        }
-
-        cacheUpdate(qual, ManagedChannelBuilder.forTarget(servers.get(0)).usePlaintext().build());
-    }
-
-    public ManagedChannel getServerChannel(String server) {
-        return serverCache.get(server);
-    }
+public class UserService extends Service {
 
     public void createAccount(String server, String username)
             throws ServerLookupFailedException, ServerUnavailableException {
@@ -201,10 +165,6 @@ public class UserService {
             System.err.println(e.getMessage());
             System.out.println("");
         }
-    }
-
-    public void delete() {
-        namingServiceClient.delete();
     }
 
 }

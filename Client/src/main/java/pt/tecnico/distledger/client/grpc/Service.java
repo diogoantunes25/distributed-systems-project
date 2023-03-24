@@ -8,26 +8,25 @@ import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 
 import pt.tecnico.distledger.client.exceptions.ServerLookupFailedException;
-import pt.tecnico.distledger.client.exceptions.ServerUnavailableException;
 import pt.tecnico.distledger.namingserver.grpc.NamingServiceClient;
 import pt.tecnico.distledger.namingserver.NamingServer;
 
 public abstract class Service {
-    private NamingServiceClient namingServiceClient = new NamingServiceClient();
-    private final static int TIMEOUT = 100; // milliseconds
+    protected NamingServiceClient namingServiceClient = new NamingServiceClient();
+    protected final static int TIMEOUT = 100; // milliseconds
 
     // Caches ManagedChannel for qualifier
-    private final Map<String, ManagedChannel> serverCache = new HashMap<>();
+    protected final Map<String, ManagedChannel> serverCache = new HashMap<>();
 
-    private boolean cacheHasServerEntry(String server) {
+    protected boolean cacheHasServerEntry(String server) {
         return serverCache.containsKey(server);
     }
 
-    private void cacheUpdate(String server, ManagedChannel channel) {
+    protected void cacheUpdate(String server, ManagedChannel channel) {
         serverCache.put(server, channel);
     }
 
-    public void cacheRefresh(String qual) throws ServerLookupFailedException {
+    protected void cacheRefresh(String qual) throws ServerLookupFailedException {
         List<String> servers = this.namingServiceClient.lookup(NamingServer.SERVICE_NAME, qual);
         if(servers.isEmpty()) {
             throw new ServerLookupFailedException(qual);
@@ -41,7 +40,7 @@ public abstract class Service {
         cacheUpdate(qual, ManagedChannelBuilder.forTarget(servers.get(0)).usePlaintext().build());
     }
 
-    public ManagedChannel getServerChannel(String server) {
+    protected ManagedChannel getServerChannel(String server) {
         return serverCache.get(server);
     }
 
