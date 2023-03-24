@@ -45,7 +45,7 @@ public class ServerMain {
             Runtime.getRuntime().addShutdownHook(new Thread(() -> {
                 try {
                     NamingServiceClient.remove(SERVICE_NAME, target);
-                } catch (ServerRegistrationFailedException e) {
+                } catch (ServerUnregistrationFailedException e) {
                     e.printStackTrace();
                 }
             }));
