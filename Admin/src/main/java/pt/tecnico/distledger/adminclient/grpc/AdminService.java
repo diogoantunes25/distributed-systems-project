@@ -38,13 +38,14 @@ public class AdminService extends Service {
             System.out.println("OK");
             System.out.println(response);
         } catch (StatusRuntimeException e) {
-            channel.shutdown();
+            System.out.println(e.getStatus().getDescription());
+            System.err.println(e.getMessage());
+            System.out.println("");
 
             if (e.getStatus() == Status.UNAVAILABLE) {
+                channel.shutdown();
                 throw new ServerUnavailableException(e);
             }
-
-            System.err.println(e.getMessage());
         }
     }
 
@@ -70,11 +71,14 @@ public class AdminService extends Service {
             System.out.println("OK");
             System.out.println(response);
         } catch (StatusRuntimeException e) {
-            channel.shutdown();
+            System.out.println(e.getStatus().getDescription());
+            System.err.println(e.getMessage());
+            System.out.println("");
+
             if (e.getStatus() == Status.UNAVAILABLE) {
+                channel.shutdown();
                 throw new ServerUnavailableException(e);
             }
-            System.err.println(e.getMessage());
         }
     }
 
@@ -101,11 +105,14 @@ public class AdminService extends Service {
             System.out.println("OK");
             System.out.println(response);
         } catch (StatusRuntimeException e) {
-            channel.shutdown();
+            System.out.println(e.getStatus().getDescription());
+            System.err.println(e.getMessage());
+            System.out.println("");
+
             if (e.getStatus() == Status.UNAVAILABLE) {
+                channel.shutdown();
                 throw new ServerUnavailableException(e);
             }
-            System.err.println(e.getMessage());
         }
     }
 
