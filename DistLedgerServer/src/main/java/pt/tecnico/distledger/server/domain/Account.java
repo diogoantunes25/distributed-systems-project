@@ -1,7 +1,5 @@
 package pt.tecnico.distledger.server.domain;
 
-import pt.tecnico.distledger.server.domain.exceptions.NotEnoughBalanceException;
-
 public class Account {
     private int balance;
     private String userId;
@@ -26,12 +24,8 @@ public class Account {
         this.balance += amount;
     }
 
-    public void decreaseBalance(int amount) throws NotEnoughBalanceException {
-        if (amount <= balance) {
-            this.balance -= amount;
-            return;
-        }
-        throw new NotEnoughBalanceException(balance, amount);
+    public void decreaseBalance(int amount) {
+        this.balance -= amount;
     }
 
     public int getBalance() {

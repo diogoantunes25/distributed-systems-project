@@ -98,6 +98,10 @@ public class ServerState {
         if (amount <= 0) {
             throw new InvalidTransferAmountException(amount);
         }
+
+        if (accounts.get(accountFrom).getBalance() < amount) {
+            throw new NotEnoughBalanceException(accounts.get(accountFrom).getBalance(), amount);
+        }
     }
 
     public synchronized int getBalance(String userId)
