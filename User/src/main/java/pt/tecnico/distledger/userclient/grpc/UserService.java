@@ -89,9 +89,9 @@ public class UserService {
             channel.shutdown();
 
             if (e.getStatus() == Status.UNAVAILABLE) {
-                throw new ServerUnavailableException(e);
+               throw new ServerUnavailableException(e);
             }
-
+ 
             System.out.println(e.getStatus().getDescription());
             System.err.println(e.getMessage());
             System.out.println("");
@@ -181,10 +181,10 @@ public class UserService {
 
     public void transferTo(String server, String username, String dest, Integer amount) throws ServerLookupFailedException, ServerUnavailableException {
         try {
-            tryGetBalance(server, username);
+            tryTransferTo(server, username, dest, amount);
         } catch (ServerUnavailableException e) {
             refreshCache(server);
-            tryGetBalance(server, username);
+            tryTransferTo(server, username, dest, amount);
         }
     }
 
