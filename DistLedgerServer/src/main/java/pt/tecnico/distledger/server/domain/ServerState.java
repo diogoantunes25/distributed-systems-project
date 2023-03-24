@@ -82,7 +82,7 @@ public class ServerState {
         assertCanTransferTo(accountFrom, accountTo, amount);
         accounts.get(accountFrom).decreaseBalance(amount);
         accounts.get(accountTo).increaseBalance(amount);
-        ledger.add(new TransferOp(accountFrom, accountFrom, amount));
+        ledger.add(new TransferOp(accountFrom, accountTo, amount));
     }
 
     public synchronized void assertCanTransferTo(String accountFrom, String accountTo, int amount)
@@ -115,11 +115,7 @@ public class ServerState {
 
     public synchronized void updateLedger(List<Operation> proposedLedger) 
             throws ServerUnavailableException {
-        if (!active.get()) {
-            throw new ServerUnavailableException();
-        }
-
-        // Reset ledger
+        assertIsActive();
 
         // Guarantees I don't update to older ledger (because ledger is append-only)
         if (proposedLedger.size() <= this.ledger.size()) {
@@ -128,20 +124,23 @@ public class ServerState {
 
         Map<String, Account> oldAccounts = this.accounts;
         List<Operation> oldLedger = this.ledger;
+
         this.ledger = new ArrayList<>();
         accounts = new HashMap<>();
         Account broker = Account.getBroker();
         this.accounts.put(broker.getUserId(), broker);
 
         // Replay all actions
-         ExecutorVisitor visitor = new ExecutorVisitor(this);
-         try {
-             for (Operation op: proposedLedger) op.accept(visitor);
-         } catch (InvalidLedgerException e) {
-             accounts = oldAccounts;
-             ledger = oldLedger;
-             throw e;
-         }
+        ExecutorVisitor visitor = new ExecutorVisitor(this);
+        try {
+            System.out.println(proposedLedger.size());
+            for (Operation op : proposedLedger)
+                op.accept(visitor);
+        } catch (InvalidLedgerException e) {
+            accounts = oldAccounts;
+            ledger = oldLedger;
+            throw e;
+        }
     }
 
 

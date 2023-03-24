@@ -125,7 +125,8 @@ public class UserService extends Service {
         }
     }
 
-    public void transferTo(String server, String username, String dest, Integer amount) throws ServerLookupFailedException, ServerUnavailableException {
+    public void transferTo(String server, String username, String dest, Integer amount) 
+            throws ServerLookupFailedException, ServerUnavailableException {
         if (!cacheHasServerEntry(server)) cacheRefresh(server);
 
         try {
@@ -136,7 +137,8 @@ public class UserService extends Service {
         }
     }
 
-    private void tryTransferTo(String server, String username, String dest, Integer amount) throws ServerUnavailableException {
+    private void tryTransferTo(String server, String username, String dest, Integer amount) 
+            throws ServerUnavailableException {
         ManagedChannel channel = getServerChannel(server);
 
         try{
