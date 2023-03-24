@@ -29,20 +29,23 @@ public class CrossServerClient {
     private final String qual;
     private String cachedServer;
     private Integer cachedServerStateSize;
+    private ManagedChannel cachedChannel;
 
     public CrossServerClient(ServerState state, String qual) {
         this.cachedServer = null;
+        this.cachedChannel = null;
         this.cachedServerStateSize = 0;
         this.state = state;
         this.qual = qual;
-    } 
+    }
 
     public boolean canWrite() {
         return qual.equals(PRIMARY_QUAL);
     }
 
-    private void cacheUpdate(String server, Integer size){
+    private void cacheUpdate(String server, Integer size, ManagedChannel channel){
         this.cachedServer = server;
+        this.cachedChannel = channel;
         this.cachedServerStateSize = size;
     }
     
@@ -61,13 +64,12 @@ public class CrossServerClient {
             System.out.println("WARNING: More than one secondary server found");
         }
 
-        cacheUpdate(secondaryServers.get(0), 0);
+        cacheUpdate(secondaryServers.get(0), 0, ManagedChannelBuilder.forTarget(secondaryServers.get(0)).usePlaintext().build());
     }
 
     private void tryPropagateState() 
             throws NoSecundaryServersException, CannotPropagateStateException {
-        ManagedChannel channel = ManagedChannelBuilder.forTarget(cachedServer).usePlaintext().build();
-        DistLedgerCrossServerServiceGrpc.DistLedgerCrossServerServiceBlockingStub stub = DistLedgerCrossServerServiceGrpc.newBlockingStub(channel);
+        DistLedgerCrossServerServiceGrpc.DistLedgerCrossServerServiceBlockingStub stub = DistLedgerCrossServerServiceGrpc.newBlockingStub(cachedChannel);
 
         MessageConverterVisitor visitor = new MessageConverterVisitor();
         List<Operation> ledgerState = state.getLedgerState();
@@ -83,24 +85,22 @@ public class CrossServerClient {
         try {
             stub.withDeadlineAfter(TIMEOUT, TimeUnit.MILLISECONDS).propagateState(request);
         } catch (StatusRuntimeException e) {
+            cachedChannel.shutdown();
             throw new CannotPropagateStateException(cachedServer, e);
-        } finally {
-            channel.shutdown();
         }
-
     }
 
     public void propagateState() 
             throws NoSecundaryServersException, CannotPropagateStateException {
-        if(isEmptyCache()) cacheRefresh();
+        if (isEmptyCache()) cacheRefresh();
 
         try {
             tryPropagateState();
-            cacheUpdate(cachedServer, state.getLedgerState().size());
+            cacheUpdate(cachedServer, state.getLedgerState().size(), cachedChannel); // Just update size stored
         } catch (CannotPropagateStateException e) {
             cacheRefresh();
             tryPropagateState();
-            cacheUpdate(cachedServer, state.getLedgerState().size());
+            cacheUpdate(cachedServer, state.getLedgerState().size(), cachedChannel);
         }
     }
 }
