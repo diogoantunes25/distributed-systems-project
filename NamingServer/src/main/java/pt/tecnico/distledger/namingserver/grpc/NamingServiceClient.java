@@ -1,6 +1,7 @@
-package pt.tecnico.distledger.server.grpc;
+package pt.tecnico.distledger.namingserver.grpc;
 
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
@@ -8,16 +9,23 @@ import io.grpc.ManagedChannelBuilder;
 import io.grpc.StatusRuntimeException;
 
 import pt.ulisboa.tecnico.distledger.contract.distledgerserver.NamingServerDistLedger.*;
-import pt.tecnico.distledger.server.exceptions.ServerRegistrationFailedException;
-import pt.tecnico.distledger.server.exceptions.ServerUnregistrationFailedException;
+import pt.tecnico.distledger.namingserver.exceptions.ServerUnregistrationFailedException;
+import pt.tecnico.distledger.namingserver.exceptions.ServerRegistrationFailedException;
 import pt.ulisboa.tecnico.distledger.contract.distledgerserver.NamingServiceGrpc;
 
 public class NamingServiceClient {
     private static final String NAMING_SERVER_TARGET = "localhost:5001";
-    final static ManagedChannel channel = ManagedChannelBuilder.forTarget(NAMING_SERVER_TARGET).usePlaintext().build();
-    final static NamingServiceGrpc.NamingServiceBlockingStub stub = NamingServiceGrpc.newBlockingStub(channel);
+    private static final int TIMEOUT = 5000;
+    
+    final ManagedChannel channel;
+    final NamingServiceGrpc.NamingServiceBlockingStub stub;
 
-    public static void register(String serviceName, String serverQualifier, String serverAddress)
+    public NamingServiceClient () {
+        this.channel = ManagedChannelBuilder.forTarget(NAMING_SERVER_TARGET).usePlaintext().build();
+        this.stub = NamingServiceGrpc.newBlockingStub(channel);
+    }
+
+    public void register(String serviceName, String serverQualifier, String serverAddress)
             throws ServerRegistrationFailedException {
         try {
             RegisterRequest request = RegisterRequest
@@ -27,24 +35,24 @@ public class NamingServiceClient {
                 .setAddress(serverAddress)
                 .build();
     
-            stub.register(request);
+            stub.withDeadlineAfter(TIMEOUT, TimeUnit.MILLISECONDS).register(request);
         } catch (StatusRuntimeException e) {
             throw new ServerRegistrationFailedException(serverAddress, serverQualifier, serviceName, e);
         }
     }
 
-    public static List<String> lookup(String serviceName, String serverQualifier) {
+    public List<String> lookup(String serviceName, String serverQualifier) {
         LookupRequest request = LookupRequest
             .newBuilder()
             .setServiceName(serviceName)
             .setQualifier(serverQualifier)
             .build();
-        LookupResponse response = stub.lookup(request);
+        LookupResponse response = stub.withDeadlineAfter(TIMEOUT, TimeUnit.MILLISECONDS).lookup(request);
 
         return response.getServicesList();
     }
 
-    public static void remove(String serviceName, String serverTarget) 
+    public void remove(String serviceName, String serverTarget) 
             throws ServerUnregistrationFailedException {
         try {
             RemoveRequest request = RemoveRequest
@@ -53,14 +61,14 @@ public class NamingServiceClient {
                 .setAddress(serverTarget)
                 .build();
     
-            stub.remove(request);
+            stub.withDeadlineAfter(TIMEOUT, TimeUnit.MILLISECONDS).remove(request);
         } catch (StatusRuntimeException e) {
             throw new ServerUnregistrationFailedException(serverTarget, serviceName, e);
         }
     }
 
-    public static void delete() {
-        channel.shutdown();
+    public void delete() {
+        this.channel.shutdown();
     }
 
 }

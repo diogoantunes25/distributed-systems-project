@@ -16,10 +16,14 @@ import pt.tecnico.distledger.namingserver.grpc.NamingServerServiceImpl;
 
 public class NamingServer {
 
+    public final static String SERVICE_NAME = "DistLedger";
+    public final static String PRIMARY_QUAL = "A";
+    public final static String SECONDARY_QUAL = "B";
+
     private Map<String, ServiceEntry> services = new HashMap<String, ServiceEntry>();
 
     public static void main(String[] args) throws InterruptedException, IOException {
-        if (args.length < 2) {
+        if (args.length < 1) {
             System.err.println("Argument(s) missing!");
             System.err.printf("Usage: java %s port", NamingServer.class.getName());
             return;
@@ -43,7 +47,9 @@ public class NamingServer {
         if (service == null) {
             service = new ServiceEntry(serviceName);
             services.put(serviceName, service);
-        } else {
+        }
+
+        if (service.hasServer(hostname, port)) {
             throw new CannotRegisterException(serviceName, hostname, port);
         }
 

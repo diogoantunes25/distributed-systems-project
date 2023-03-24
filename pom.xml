@@ -14,10 +14,11 @@
 		builds the selected projects in order. -->
 	<modules>
 		<module>Contract</module>
+		<module>NamingServer</module>
+		<module>Client</module>
 		<module>User</module>
 		<module>Admin</module>
 		<module>DistLedgerServer</module>
-		<module>NamingServer</module>
 
 		<!-- This one should only be used in phases 2 and 3
 		 <module>NamingServer</module>-->

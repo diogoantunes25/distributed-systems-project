@@ -10,26 +10,27 @@ import io.grpc.StatusRuntimeException;
 import pt.ulisboa.tecnico.distledger.contract.DistLedgerCommonDefinitions.LedgerState;
 import pt.ulisboa.tecnico.distledger.contract.distledgerserver.CrossServerDistLedger.*;
 import pt.ulisboa.tecnico.distledger.contract.distledgerserver.DistLedgerCrossServerServiceGrpc;
+import pt.tecnico.distledger.namingserver.grpc.NamingServiceClient;
+import pt.tecnico.distledger.namingserver.NamingServer;
 
-import pt.tecnico.distledger.server.domain.ServerState;
-import pt.tecnico.distledger.server.domain.operation.Operation;
 import pt.tecnico.distledger.server.exceptions.CannotPropagateStateException;
 import pt.tecnico.distledger.server.exceptions.NoSecundaryServersException;
+import pt.tecnico.distledger.server.domain.ServerState;
+import pt.tecnico.distledger.server.domain.operation.Operation;
 import pt.tecnico.distledger.server.visitor.MessageConverterVisitor;
 
 public class CrossServerClient {
-    private final String SERVICE_NAME = "DistLedger";
 
-    private static final String PRIMARY_QUAL = "A";
-    private static final String SECONDARY_QUAL = "B";
-
-    private static final Integer TIMEOUT = 500;
+    private static final Integer TIMEOUT = 5000; // miliseconds
 
     private ServerState state;
     private final String qual;
+
     private String cachedServer;
     private Integer cachedServerStateSize;
     private ManagedChannel cachedChannel;
+    
+    private NamingServiceClient namingServiceClient = new NamingServiceClient();
 
     public CrossServerClient(ServerState state, String qual) {
         this.cachedServer = null;
@@ -40,7 +41,7 @@ public class CrossServerClient {
     }
 
     public boolean canWrite() {
-        return qual.equals(PRIMARY_QUAL);
+        return qual.equals(NamingServer.PRIMARY_QUAL);
     }
 
     private void cacheUpdate(String server, Integer size, ManagedChannel channel){
@@ -54,7 +55,7 @@ public class CrossServerClient {
     }
 
     private void cacheRefresh() throws NoSecundaryServersException {
-        List<String> secondaryServers = NamingServiceClient.lookup(SERVICE_NAME, SECONDARY_QUAL);
+        List<String> secondaryServers = namingServiceClient.lookup(NamingServer.SERVICE_NAME, NamingServer.SECONDARY_QUAL);
         if (secondaryServers.isEmpty()) {
             throw new NoSecundaryServersException();
         }
@@ -67,18 +68,20 @@ public class CrossServerClient {
         cacheUpdate(secondaryServers.get(0), 0, ManagedChannelBuilder.forTarget(secondaryServers.get(0)).usePlaintext().build());
     }
 
-    private void tryPropagateState() 
+    private void tryPropagateState(Operation op) 
             throws NoSecundaryServersException, CannotPropagateStateException {
         DistLedgerCrossServerServiceGrpc.DistLedgerCrossServerServiceBlockingStub stub = DistLedgerCrossServerServiceGrpc.newBlockingStub(cachedChannel);
 
         MessageConverterVisitor visitor = new MessageConverterVisitor();
         List<Operation> ledgerState = state.getLedgerState();
+        ledgerState.add(op);
         
         LedgerState.Builder ledgerStateBuilder = LedgerState.newBuilder();
         ledgerState.subList(cachedServerStateSize, ledgerState.size())
                 .forEach(o -> ledgerStateBuilder.addLedger(o.accept(visitor)));
         
         PropagateStateRequest request = PropagateStateRequest.newBuilder()
+                .setStart(cachedServerStateSize)
                 .setState(ledgerStateBuilder.build())
                 .build();
 
@@ -90,17 +93,17 @@ public class CrossServerClient {
         }
     }
 
-    public void propagateState() 
+    public void propagateState(Operation op) 
             throws NoSecundaryServersException, CannotPropagateStateException {
         if (isEmptyCache()) cacheRefresh();
 
         try {
-            tryPropagateState();
-            cacheUpdate(cachedServer, state.getLedgerState().size(), cachedChannel); // Just update size stored
+            tryPropagateState(op);
+            cacheUpdate(cachedServer, state.getLedgerState().size()+1, cachedChannel); // Just update size stored
         } catch (CannotPropagateStateException e) {
             cacheRefresh();
-            tryPropagateState();
-            cacheUpdate(cachedServer, state.getLedgerState().size(), cachedChannel);
+            tryPropagateState(op);
+            cacheUpdate(cachedServer, state.getLedgerState().size()+1, cachedChannel);
         }
     }
 }

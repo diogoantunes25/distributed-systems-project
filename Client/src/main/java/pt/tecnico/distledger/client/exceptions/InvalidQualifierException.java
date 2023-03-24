@@ -1,4 +1,4 @@
-package pt.tecnico.distledger.userclient.exceptions;
+package pt.tecnico.distledger.client.exceptions;
 
 public class InvalidQualifierException extends Exception {
 

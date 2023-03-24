@@ -5,7 +5,7 @@
 	<!-- http://maven.apache.org/pom.html#Quick_Overview -->
 
 	<groupId>pt.tecnico.sdis.2023.A09</groupId>
-	<artifactId>User</artifactId>
+	<artifactId>Client</artifactId>
 	<version>1.0.0-SNAPSHOT</version>
 	<packaging>jar</packaging>
 	<name>${project.artifactId}</name>
@@ -20,7 +20,7 @@
 		<version.maven-compiler-plugin>3.8.1</version.maven-compiler-plugin>
 		<version.exec-maven-plugin>3.0.0</version.exec-maven-plugin>
 
-		<mainclass>pt.tecnico.distledger.userclient.UserClientMain</mainclass>
+		<mainclass>pt.tecnico.distledger.client.ClientMain</mainclass>
 		<server.host>localhost</server.host>
 		<server.port>2001</server.port>
 
@@ -35,11 +35,6 @@
 		<dependency>
 			<groupId>pt.tecnico.sdis.2023.A09</groupId>
 			<artifactId>Contract</artifactId>
-			<version>1.0.0-SNAPSHOT</version>
-		</dependency>
-		<dependency>
-			<groupId>pt.tecnico.sdis.2023.A09</groupId>
-			<artifactId>Client</artifactId>
 			<version>1.0.0-SNAPSHOT</version>
 		</dependency>
 		<dependency>

@@ -82,7 +82,7 @@ public class ServerState {
         assertCanTransferTo(accountFrom, accountTo, amount);
         accounts.get(accountFrom).decreaseBalance(amount);
         accounts.get(accountTo).increaseBalance(amount);
-        ledger.add(new TransferOp(accountFrom, accountFrom, amount));
+        ledger.add(new TransferOp(accountFrom, accountTo, amount));
     }
 
     public synchronized void assertCanTransferTo(String accountFrom, String accountTo, int amount)
@@ -97,6 +97,10 @@ public class ServerState {
 
         if (amount <= 0) {
             throw new InvalidTransferAmountException(amount);
+        }
+
+        if (accounts.get(accountFrom).getBalance() < amount) {
+            throw new NotEnoughBalanceException(accounts.get(accountFrom).getBalance(), amount);
         }
     }
 
@@ -113,35 +117,14 @@ public class ServerState {
         }
     }
 
-    public synchronized void updateLedger(List<Operation> proposedLedger) 
-            throws ServerUnavailableException {
-        if (!active.get()) {
-            throw new ServerUnavailableException();
-        }
-
-        // Reset ledger
-
-        // Guarantees I don't update to older ledger (because ledger is append-only)
-        if (proposedLedger.size() <= this.ledger.size()) {
-            return;
-        }
-
-        Map<String, Account> oldAccounts = this.accounts;
-        List<Operation> oldLedger = this.ledger;
-        this.ledger = new ArrayList<>();
-        accounts = new HashMap<>();
-        Account broker = Account.getBroker();
-        this.accounts.put(broker.getUserId(), broker);
+    public synchronized void updateLedger(List<Operation> newOperations, int newStart) 
+            throws ServerUnavailableException, InvalidLedgerException {
+        assertIsActive();
 
         // Replay all actions
-         ExecutorVisitor visitor = new ExecutorVisitor(this);
-         try {
-             for (Operation op: proposedLedger) op.accept(visitor);
-         } catch (InvalidLedgerException e) {
-             accounts = oldAccounts;
-             ledger = oldLedger;
-             throw e;
-         }
+        ExecutorVisitor visitor = new ExecutorVisitor(this);
+        for (Operation op : newOperations.subList(this.ledger.size() - newStart, newOperations.size()))
+            op.accept(visitor);
     }
 
 

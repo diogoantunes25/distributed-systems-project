@@ -1,81 +1,33 @@
 package pt.tecnico.distledger.adminclient.grpc;
 
-import io.grpc.ManagedChannel;
-import io.grpc.ManagedChannelBuilder;
-
-import io.grpc.Status;
-import io.grpc.StatusRuntimeException;
-import pt.tecnico.distledger.adminclient.exceptions.ServerLookupFailedException;
-import pt.tecnico.distledger.adminclient.exceptions.ServerUnavailableException;
-import pt.ulisboa.tecnico.distledger.contract.admin.AdminServiceGrpc;
-import pt.ulisboa.tecnico.distledger.contract.admin.AdminDistLedger;
-import pt.ulisboa.tecnico.distledger.contract.distledgerserver.NamingServerDistLedger;
-import pt.ulisboa.tecnico.distledger.contract.distledgerserver.NamingServiceGrpc;
-
-import java.sql.Time;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-public class AdminService {
-    private final ManagedChannel nameServerChannel;
-    private final NamingServiceGrpc.NamingServiceBlockingStub nameServerStub;
-    private final static String SERVICE_NAME = "DistLedger";
-    private final static int TIMEOUT = 100; // milliseconds
+import io.grpc.ManagedChannel;
+import io.grpc.Status;
+import io.grpc.StatusRuntimeException;
 
-    // Caches ManagedChannel for qualifier
-    private final Map<String, ManagedChannel> serverCache = new HashMap<>();
+import pt.ulisboa.tecnico.distledger.contract.admin.AdminServiceGrpc;
+import pt.ulisboa.tecnico.distledger.contract.admin.AdminDistLedger;
+import pt.tecnico.distledger.client.grpc.Service;
 
-    public AdminService(String nameServer) {
-        this.nameServerChannel = ManagedChannelBuilder.forTarget(nameServer).usePlaintext().build();
-        this.nameServerStub = NamingServiceGrpc.newBlockingStub(nameServerChannel);
-    }
+import pt.tecnico.distledger.client.exceptions.ServerLookupFailedException;
+import pt.tecnico.distledger.client.exceptions.ServerUnavailableException;
 
-    public void refreshCache(String qual)
-            throws ServerLookupFailedException {
-        NamingServerDistLedger.LookupRequest request = NamingServerDistLedger.LookupRequest.newBuilder()
-                .setServiceName(SERVICE_NAME)
-                .setQualifier(qual)
-                .build();
-        try {
-            NamingServerDistLedger.LookupResponse response = nameServerStub.lookup(request);
-            if (response.getServicesCount() == 0) {
-                throw new ServerLookupFailedException(qual);
-            }
-            System.out.printf("Server for %s with %s found at %s\n", SERVICE_NAME, qual, response.getServices(0));
-
-            serverCache.put(qual, ManagedChannelBuilder.forTarget(response.getServices(0)).usePlaintext().build());
-        } catch (StatusRuntimeException e) {
-            throw new ServerLookupFailedException(qual, e);
-        }
-    }
-
-    public ManagedChannel getServerChannel(String server) throws ServerLookupFailedException {
-        if (!serverCache.containsKey(server)) {
-            refreshCache(server);
-        }
-
-        return serverCache.get(server);
-    }
-
+public class AdminService extends Service {
 
     public void activate(String server) throws ServerUnavailableException, ServerLookupFailedException {
+        if (!cacheHasServerEntry(server)) cacheRefresh(server);
+
         try {
             tryActivate(server);
         } catch (ServerUnavailableException e) {
-            refreshCache(server);
+            cacheRefresh(server);
             tryActivate(server);
         }
     }
 
     private void tryActivate(String server) throws ServerUnavailableException {
-        ManagedChannel channel;
-        try {
-            channel = getServerChannel(server);
-        } catch (ServerLookupFailedException e) {
-            e.printStackTrace();
-            return;
-        }
+        ManagedChannel channel = getServerChannel(server);
 
         try{
             AdminServiceGrpc.AdminServiceBlockingStub stub = AdminServiceGrpc.newBlockingStub(channel);
@@ -86,32 +38,29 @@ public class AdminService {
             System.out.println("OK");
             System.out.println(response);
         } catch (StatusRuntimeException e) {
-            channel.shutdown();
+            System.out.println(e.getStatus().getDescription());
+            System.err.println(e.getMessage());
+            System.out.println("");
 
             if (e.getStatus() == Status.UNAVAILABLE) {
+                channel.shutdown();
                 throw new ServerUnavailableException(e);
             }
-
-            System.err.println(e.getMessage());
         }
     }
 
     public void deactivate(String server) throws ServerUnavailableException, ServerLookupFailedException {
+        if (!cacheHasServerEntry(server)) cacheRefresh(server);
+
         try {
-            tryActivate(server);
+            tryDeactivate(server);
         } catch (ServerUnavailableException e) {
-            refreshCache(server);
-            tryActivate(server);
+            cacheRefresh(server);
+            tryDeactivate(server);
         }
     }
     private void tryDeactivate(String server) throws ServerUnavailableException {
-        ManagedChannel channel;
-        try {
-            channel = getServerChannel(server);
-        } catch (ServerLookupFailedException e) {
-            e.printStackTrace();
-            return;
-        }
+        ManagedChannel channel = getServerChannel(server);
 
         try{
             AdminServiceGrpc.AdminServiceBlockingStub stub = AdminServiceGrpc.newBlockingStub(channel);
@@ -122,31 +71,30 @@ public class AdminService {
             System.out.println("OK");
             System.out.println(response);
         } catch (StatusRuntimeException e) {
-            channel.shutdown();
+            System.out.println(e.getStatus().getDescription());
+            System.err.println(e.getMessage());
+            System.out.println("");
+
             if (e.getStatus() == Status.UNAVAILABLE) {
+                channel.shutdown();
                 throw new ServerUnavailableException(e);
             }
-            System.err.println(e.getMessage());
         }
     }
 
     public void getLedgerState(String server) throws ServerLookupFailedException, ServerUnavailableException {
+        if (!cacheHasServerEntry(server)) cacheRefresh(server);
+
         try {
             tryGetLedgerState(server);
         } catch (ServerUnavailableException e) {
-            refreshCache(server);
+            cacheRefresh(server);
             tryGetLedgerState(server);
         }
     }
 
     private void tryGetLedgerState(String server) throws ServerUnavailableException {
-        ManagedChannel channel;
-        try {
-            channel = getServerChannel(server);
-        } catch (ServerLookupFailedException e) {
-            e.printStackTrace();
-            return;
-        }
+        ManagedChannel channel = getServerChannel(server);
 
         try{
             AdminServiceGrpc.AdminServiceBlockingStub stub = AdminServiceGrpc.newBlockingStub(channel);
@@ -157,15 +105,15 @@ public class AdminService {
             System.out.println("OK");
             System.out.println(response);
         } catch (StatusRuntimeException e) {
-            channel.shutdown();
+            System.out.println(e.getStatus().getDescription());
+            System.err.println(e.getMessage());
+            System.out.println("");
+
             if (e.getStatus() == Status.UNAVAILABLE) {
+                channel.shutdown();
                 throw new ServerUnavailableException(e);
             }
-            System.err.println(e.getMessage());
         }
     }
 
-    public void delete() {
-        nameServerChannel.shutdown();
-    }
 }

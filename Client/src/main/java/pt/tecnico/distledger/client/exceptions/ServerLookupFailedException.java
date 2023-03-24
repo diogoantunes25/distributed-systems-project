@@ -1,4 +1,4 @@
-package pt.tecnico.distledger.userclient.exceptions;
+package pt.tecnico.distledger.client.exceptions;
 
 public class ServerLookupFailedException extends Exception {
     private String server;
@@ -10,5 +10,9 @@ public class ServerLookupFailedException extends Exception {
     public ServerLookupFailedException(String server, Throwable cause) {
         super(String.format("Lookup for %s failed", server), cause);
         this.server = server;
+    }
+
+    public String getServer() {
+        return server;
     }
 }
