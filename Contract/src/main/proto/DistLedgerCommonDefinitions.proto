@@ -13,8 +13,15 @@ enum OperationType {
 message Operation {
   OperationType type = 1;
   string userId = 2;
-  string destUserId = 3;  //only for transferTo operations
-  int32 amount = 4;  //only for transferTo operations
+  int64 uid = 3;
+  Timestamp prev = 4;
+  Timestamp ts = 5;
+  string destUserId = 6;  //only for transferTo operations
+  int32 amount = 7;  //only for transferTo operations
+}
+
+message Timestamp {
+  map<string, uint32> timestamp = 1;
 }
 
 message LedgerState {

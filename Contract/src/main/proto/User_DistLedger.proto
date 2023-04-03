@@ -5,17 +5,23 @@ package pt.ulisboa.tecnico.distledger.contract.user;
 
 message BalanceRequest {
   string userId = 1;
+  Timestamp prev = 2;
 }
 
 message BalanceResponse {
   int32 value = 1;
+  Timestamp new = 2;
 }
 
 message CreateAccountRequest {
   string userId = 1;
+  Timestamp prev = 2;
+  int64 uid = 3;
 }
 
-message CreateAccountResponse {}
+message CreateAccountResponse {
+  Timestamp ts = 1;
+}
 
 message DeleteAccountRequest {
   string userId = 1;
@@ -27,9 +33,13 @@ message TransferToRequest {
   string accountFrom = 1;
   string accountTo = 2;
   int32 amount = 3;
+  Timestamp prev = 4;
+  int64 uid = 5;
 }
 
-message TransferToResponse {}
+message TransferToResponse {
+  Timestamp ts = 1;
+}
 
 service UserService {
   rpc balance(BalanceRequest) returns (BalanceResponse);
