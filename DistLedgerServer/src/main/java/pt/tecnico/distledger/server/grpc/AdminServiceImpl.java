@@ -14,21 +14,14 @@ import pt.tecnico.distledger.server.visitor.MessageConverterVisitor;
 public class AdminServiceImpl extends AdminServiceGrpc.AdminServiceImplBase{
 
     private ServerState state;
-    private ReentrantLock lock;
 
-    public AdminServiceImpl(ServerState state, ReentrantLock lock) {
+    public AdminServiceImpl(ServerState state) {
         this.state = state;
-        this.lock = lock;
     }
 
     @Override
     public void activate(ActivateRequest request, StreamObserver<ActivateResponse> responseObserver) {
-        try {
-            lock.lock();
-            state.activate();
-        } finally {
-            lock.unlock();
-        }
+        state.activate();
 
         ActivateResponse response = ActivateResponse.newBuilder().build();
         responseObserver.onNext(response);
@@ -37,12 +30,7 @@ public class AdminServiceImpl extends AdminServiceGrpc.AdminServiceImplBase{
 
     @Override
     public void deactivate(DeactivateRequest request, StreamObserver<DeactivateResponse> responseObserver) {
-        try {
-            lock.lock();
-            state.deactivate();
-        } finally {
-            lock.unlock();
-        }
+        state.deactivate();
 
         DeactivateResponse response = DeactivateResponse.newBuilder().build();
         responseObserver.onNext(response);
@@ -51,7 +39,7 @@ public class AdminServiceImpl extends AdminServiceGrpc.AdminServiceImplBase{
 
     @Override
     public void gossip(GossipRequest request, StreamObserver<GossipResponse> responseObserver) {
-        // state.gossip();
+        // TODO
         GossipResponse response = GossipResponse.newBuilder().build();
         responseObserver.onNext(response);
         responseObserver.onCompleted();
@@ -59,17 +47,6 @@ public class AdminServiceImpl extends AdminServiceGrpc.AdminServiceImplBase{
 
     @Override
     public void getLedgerState(getLedgerStateRequest request, StreamObserver<getLedgerStateResponse> responseObserver) {
-        MessageConverterVisitor visitor = new MessageConverterVisitor();
-
-        LedgerState.Builder ledgerStateBuilder = LedgerState.newBuilder();
-        state.getLedgerState().stream()
-              .forEach(o -> ledgerStateBuilder.addLedger(o.accept(visitor)));
-
-        getLedgerStateResponse response = getLedgerStateResponse.newBuilder()
-                .setLedgerState(ledgerStateBuilder.build())
-                .build();
-
-        responseObserver.onNext(response);
-        responseObserver.onCompleted();
+        // TODO
     }
 }

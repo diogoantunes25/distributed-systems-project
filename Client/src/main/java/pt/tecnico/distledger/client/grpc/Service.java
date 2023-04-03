@@ -32,11 +32,6 @@ public abstract class Service {
             throw new ServerLookupFailedException(qual);
         }
 
-        if (servers.size() > 1){
-            // We assume there is only one secondary server active at every moment
-            System.out.println("WARNING: More than one secondary server found");
-        }
-
         cacheUpdate(qual, ManagedChannelBuilder.forTarget(servers.get(0)).usePlaintext().build());
     }
 

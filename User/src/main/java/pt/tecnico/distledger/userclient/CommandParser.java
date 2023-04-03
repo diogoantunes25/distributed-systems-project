@@ -33,12 +33,6 @@ public class CommandParser {
         logger.setLevel(debug ? Level.INFO : Level.WARNING);
     }
 
-    private void assertValidQualifier(String qual) throws InvalidQualifierException {
-        if (!qual.equals(NamingServer.PRIMARY_QUAL) && !qual.equals(NamingServer.SECONDARY_QUAL)) {
-            throw new InvalidQualifierException(qual);
-        }
-    }
-
     void parseInput() {
 
         Scanner scanner = new Scanner(System.in);
@@ -109,8 +103,6 @@ public class CommandParser {
         String server = split[1];
         String username = split[2];
 
-        assertValidQualifier(server);
-
         logger.info("Server: " + server);
         logger.info("Username: " + username);
 
@@ -130,8 +122,6 @@ public class CommandParser {
         logger.info("Server: " + server);
         logger.info("Username: " + username);
 
-        assertValidQualifier(server);
-
         this.userService.deleteAccount(server, username);
     }
 
@@ -148,8 +138,6 @@ public class CommandParser {
 
         logger.info("Server: " + server);
         logger.info("Username: " + username);
-
-        assertValidQualifier(server);
 
         this.userService.balance(server, username);
     }
@@ -170,8 +158,6 @@ public class CommandParser {
         logger.info("Username: " + from);
         logger.info("Destination: " + dest);
         logger.info("Amount: " + amount);
-
-        assertValidQualifier(server);
 
         this.userService.transferTo(server, from, dest, amount);
     }

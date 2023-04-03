@@ -30,33 +30,6 @@ public class CrossServerServiceImpl extends DistLedgerCrossServerServiceGrpc.Dis
 
     @Override
     public void propagateState(PropagateStateRequest request, StreamObserver<PropagateStateResponse> responseStreamObserver) {
-        List<Operation> newOperations = new ArrayList<>();
-
-        request.getState().getLedgerList().forEach(op -> {
-            switch (op.getType()) {
-                case OP_TRANSFER_TO:
-                    newOperations.add(new TransferOp(op.getUserId(), op.getDestUserId(), op.getAmount()));
-                    break;
-                case OP_CREATE_ACCOUNT:
-                    newOperations.add(new CreateOp(op.getUserId()));
-                    break;
-                case OP_DELETE_ACCOUNT:
-                    newOperations.add(new DeleteOp(op.getUserId()));
-                    break;
-                default:
-                    responseStreamObserver.onError(Status.INVALID_ARGUMENT.withDescription(INVALID_LEDGER_STATE).asRuntimeException());
-            }
-        });
-
-        try {
-            state.updateLedger(newOperations, request.getStart());
-
-            responseStreamObserver.onNext(PropagateStateResponse.newBuilder().build());
-            responseStreamObserver.onCompleted();
-        } catch (InvalidLedgerException e) {
-            responseStreamObserver.onError(Status.INVALID_ARGUMENT.withDescription(INVALID_LEDGER_STATE).asRuntimeException());
-        } catch (ServerUnavailableException e) {
-            responseStreamObserver.onError(Status.UNAVAILABLE.withDescription(SERVER_UNAVAILABLE).asRuntimeException());
-        }
+        // TODO
     }
 }

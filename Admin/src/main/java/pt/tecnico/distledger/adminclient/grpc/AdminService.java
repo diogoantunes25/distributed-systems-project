@@ -98,9 +98,8 @@ public class AdminService extends Service {
 
         try{
             AdminServiceGrpc.AdminServiceBlockingStub stub = AdminServiceGrpc.newBlockingStub(channel);
-            AdminDistLedger.getLedgerStateRequest request =
-                AdminDistLedger.getLedgerStateRequest.newBuilder().build();
-            AdminDistLedger.getLedgerStateResponse response = stub.withDeadlineAfter(TIMEOUT, TimeUnit.MILLISECONDS).getLedgerState(request);
+
+            // TODO
 
             System.out.println("OK");
             System.out.println(response);

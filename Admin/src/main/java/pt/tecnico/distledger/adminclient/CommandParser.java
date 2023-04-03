@@ -36,12 +36,6 @@ public class CommandParser {
 			System.err.println(debugMessage);
 	}
 
-    private void assertValidQualifier(String qual) throws InvalidQualifierException {
-        if (!qual.equals(NamingServer.PRIMARY_QUAL) && !qual.equals(NamingServer.SECONDARY_QUAL)) {
-            throw new InvalidQualifierException(qual);
-        }
-    }
-
     void parseInput() {
 
         Scanner scanner = new Scanner(System.in);
@@ -83,8 +77,6 @@ public class CommandParser {
                         break;
                 }
 
-            } catch (InvalidQualifierException e) {
-                System.out.println(String.format("Qualifier '%s' is invalid - must be '%s' or '%s'.", e.getQual(), NamingServer.PRIMARY_QUAL, NamingServer.SECONDARY_QUAL));
             } catch (ServerUnavailableException e) {
                 System.out.println(String.format("Server is currently unavailable. For writes, you can use the other server."));
             } catch (ServerLookupFailedException e) {
@@ -108,8 +100,6 @@ public class CommandParser {
         }
         String server = split[1];
 
-        assertValidQualifier(server);
-
         debug("Server: " + server);
 
         this.adminService.activate(server);
@@ -124,8 +114,6 @@ public class CommandParser {
         }
         String server = split[1];
 
-        assertValidQualifier(server);
-
         debug("Server: " + server);
 
         this.adminService.deactivate(server);
@@ -139,8 +127,6 @@ public class CommandParser {
             return;
         }
         String server = split[1];
-
-        assertValidQualifier(server);
 
         debug("Server: " + server);
 

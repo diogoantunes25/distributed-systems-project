@@ -71,26 +71,7 @@ public class CrossServerClient {
     private void tryPropagateState(Operation op) 
             throws NoSecundaryServersException, CannotPropagateStateException {
         DistLedgerCrossServerServiceGrpc.DistLedgerCrossServerServiceBlockingStub stub = DistLedgerCrossServerServiceGrpc.newBlockingStub(cachedChannel);
-
-        MessageConverterVisitor visitor = new MessageConverterVisitor();
-        List<Operation> ledgerState = state.getLedgerState();
-        ledgerState.add(op);
-        
-        LedgerState.Builder ledgerStateBuilder = LedgerState.newBuilder();
-        ledgerState.subList(cachedServerStateSize, ledgerState.size())
-                .forEach(o -> ledgerStateBuilder.addLedger(o.accept(visitor)));
-        
-        PropagateStateRequest request = PropagateStateRequest.newBuilder()
-                .setStart(cachedServerStateSize)
-                .setState(ledgerStateBuilder.build())
-                .build();
-
-        try {
-            stub.withDeadlineAfter(TIMEOUT, TimeUnit.MILLISECONDS).propagateState(request);
-        } catch (StatusRuntimeException e) {
-            cachedChannel.shutdown();
-            throw new CannotPropagateStateException(cachedServer, e);
-        }
+        // TODO
     }
 
     public void propagateState(Operation op) 

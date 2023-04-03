@@ -32,11 +32,8 @@ public class UserService extends Service {
 
         try{
             UserServiceGrpc.UserServiceBlockingStub stub = UserServiceGrpc.newBlockingStub(channel);
-            CreateAccountRequest request = CreateAccountRequest.newBuilder()
-                    .setUserId(username)
-                    .build();
 
-            CreateAccountResponse response = stub.withDeadlineAfter(TIMEOUT, TimeUnit.MILLISECONDS).createAccount(request);
+            // TODO
 
             System.out.println("OK");
             System.out.println(response);
@@ -69,11 +66,8 @@ public class UserService extends Service {
 
         try{
             UserServiceGrpc.UserServiceBlockingStub stub = UserServiceGrpc.newBlockingStub(channel);
-            DeleteAccountRequest request = DeleteAccountRequest.newBuilder()
-                    .setUserId(username)
-                    .build();
 
-            DeleteAccountResponse response = stub.withDeadlineAfter(TIMEOUT, TimeUnit.MILLISECONDS).deleteAccount(request);
+            // TODO
 
             System.out.println("OK");
             System.out.println(response);
@@ -105,11 +99,8 @@ public class UserService extends Service {
 
         try{
             UserServiceGrpc.UserServiceBlockingStub stub = UserServiceGrpc.newBlockingStub(channel);
-            BalanceRequest request = BalanceRequest.newBuilder()
-                    .setUserId(username)
-                    .build();
 
-            BalanceResponse response = stub.withDeadlineAfter(TIMEOUT, TimeUnit.MILLISECONDS).balance(request);
+            // TODO
 
             System.out.println("OK");
             System.out.println(response);
@@ -143,14 +134,9 @@ public class UserService extends Service {
 
         try{
             UserServiceGrpc.UserServiceBlockingStub stub = UserServiceGrpc.newBlockingStub(channel);
-            TransferToRequest request = TransferToRequest.newBuilder()
-                    .setAccountFrom(username)
-                    .setAccountTo(dest)
-                    .setAmount(amount)
-                    .build();
 
-            TransferToResponse response = stub.withDeadlineAfter(TIMEOUT, TimeUnit.MILLISECONDS).transferTo(request);
-            
+            // TODO
+                        
             System.out.println("OK");
             System.out.println(response);
         } catch (StatusRuntimeException e) {

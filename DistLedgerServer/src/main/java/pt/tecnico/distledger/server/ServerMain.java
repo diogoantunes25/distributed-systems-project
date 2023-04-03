@@ -35,11 +35,10 @@ public class ServerMain {
         try {
             namingServiceClient.register(NamingServer.SERVICE_NAME, qual, target);
 
-            ReentrantLock lock = new ReentrantLock();
             ServerState state = new ServerState();
             Server server = ServerBuilder.forPort(port)
-                    .addService(new AdminServiceImpl(state, lock))
-                    .addService(new UserServiceImpl(state, qual, lock))
+                    .addService(new AdminServiceImpl(state))
+                    .addService(new UserServiceImpl(state, qual))
                     .addService(new CrossServerServiceImpl(state))
                     .build();
 
