@@ -1,6 +1,8 @@
 syntax = "proto3";
 package pt.ulisboa.tecnico.distledger.contract.user;
 
+import "DistLedgerCommonDefinitions.proto";
+
 // User Interface of the DistLedger Service
 
 message BalanceRequest {
@@ -16,7 +18,7 @@ message BalanceResponse {
 message CreateAccountRequest {
   string userId = 1;
   Timestamp prev = 2;
-  int64 uid = 3;
+  int64 updateId = 3;
 }
 
 message CreateAccountResponse {
@@ -34,7 +36,7 @@ message TransferToRequest {
   string accountTo = 2;
   int32 amount = 3;
   Timestamp prev = 4;
-  int64 uid = 5;
+  int64 updateId = 5;
 }
 
 message TransferToResponse {
