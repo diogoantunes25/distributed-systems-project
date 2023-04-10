@@ -1,6 +1,9 @@
 package pt.tecnico.distledger.server.grpc;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.HashMap;
 import java.util.concurrent.TimeUnit;
 
 import io.grpc.ManagedChannel;
@@ -13,11 +16,11 @@ import pt.ulisboa.tecnico.distledger.contract.distledgerserver.DistLedgerCrossSe
 import pt.tecnico.distledger.namingserver.grpc.NamingServiceClient;
 import pt.tecnico.distledger.namingserver.NamingServer;
 
-import pt.tecnico.distledger.server.exceptions.CannotPropagateStateException;
-import pt.tecnico.distledger.server.exceptions.NoSecundaryServersException;
 import pt.tecnico.distledger.server.domain.ServerState;
 import pt.tecnico.distledger.server.domain.operation.Operation;
 import pt.tecnico.distledger.server.visitor.MessageConverterVisitor;
+import pt.tecnico.distledger.server.exceptions.NoReplicasException;
+import pt.tecnico.distledger.server.exceptions.CannotGossipException;
 
 public class CrossServerClient {
 
@@ -26,65 +29,80 @@ public class CrossServerClient {
     private ServerState state;
     private final String qual;
 
-    private String cachedServer;
-    private Integer cachedServerStateSize;
-    private ManagedChannel cachedChannel;
+    private Map<String, ManagedChannel> cache;
     
     private NamingServiceClient namingServiceClient = new NamingServiceClient();
 
     public CrossServerClient(ServerState state, String qual) {
-        this.cachedServer = null;
-        this.cachedChannel = null;
-        this.cachedServerStateSize = 0;
         this.state = state;
         this.qual = qual;
+        this.cache = new HashMap<>();
     }
 
-    public boolean canWrite() {
-        return qual.equals(NamingServer.PRIMARY_QUAL);
+    private Set<Map.Entry<String, ManagedChannel>> getCacheEntries() {
+        return cache.entrySet();
     }
 
-    private void cacheUpdate(String server, Integer size, ManagedChannel channel){
-        this.cachedServer = server;
-        this.cachedChannel = channel;
-        this.cachedServerStateSize = size;
+    private void clearCache() {
+        cache.clear();
     }
-    
+
+    private void removeCacheEntry(String replica) {
+        cache.remove(replica);
+    }
+
     private boolean isEmptyCache() {
-        return cachedServer == null;
+        return cache.isEmpty();
     }
 
-    private void cacheRefresh() throws NoSecundaryServersException {
-        List<String> secondaryServers = namingServiceClient.lookup(NamingServer.SERVICE_NAME, NamingServer.SECONDARY_QUAL);
-        if (secondaryServers.isEmpty()) {
-            throw new NoSecundaryServersException();
+    private void cacheRefresh() throws NoReplicasException {
+        List<String> replicas = namingServiceClient.lookup(NamingServer.SERVICE_NAME, "");
+        replicas.remove(state.getTarget());
+        if (replicas.isEmpty()) {
+            throw new NoReplicasException();
         }
 
-        if (secondaryServers.size() > 1){
-            // We assume there is only one secondary server active at every moment
-            System.out.println("WARNING: More than one secondary server found");
+        clearCache();
+        for(String replica : replicas){
+            cache.put(replica, ManagedChannelBuilder.forTarget(replica).usePlaintext().build());
         }
-
-        cacheUpdate(secondaryServers.get(0), 0, ManagedChannelBuilder.forTarget(secondaryServers.get(0)).usePlaintext().build());
     }
 
-    private void tryPropagateState(Operation op) 
-            throws NoSecundaryServersException, CannotPropagateStateException {
-        DistLedgerCrossServerServiceGrpc.DistLedgerCrossServerServiceBlockingStub stub = DistLedgerCrossServerServiceGrpc.newBlockingStub(cachedChannel);
-        // TODO
-    }
+    private void tryPropagateState(String replica, ManagedChannel channel) {
+        DistLedgerCrossServerServiceGrpc.DistLedgerCrossServerServiceBlockingStub stub = DistLedgerCrossServerServiceGrpc.newBlockingStub(channel);
 
-    public void propagateState(Operation op) 
-            throws NoSecundaryServersException, CannotPropagateStateException {
-        if (isEmptyCache()) cacheRefresh();
+        MessageConverterVisitor visitor = new MessageConverterVisitor();
+        List<Operation> ledgerState = state.getLedgerState();
+        
+        LedgerState.Builder ledgerStateBuilder = LedgerState.newBuilder();
+        ledgerState.forEach(o -> ledgerStateBuilder.addLedger(o.accept(visitor)));
+        
+        PropagateStateRequest request = PropagateStateRequest.newBuilder()
+                .setLog(ledgerStateBuilder.build())
+                .setReplicaTS(state.getReplicaTS())
+                .build();
 
         try {
-            tryPropagateState(op);
-            cacheUpdate(cachedServer, state.getLedgerState().size()+1, cachedChannel); // Just update size stored
-        } catch (CannotPropagateStateException e) {
+            stub.withDeadlineAfter(TIMEOUT, TimeUnit.MILLISECONDS).propagateState(request);
+        } catch (StatusRuntimeException e) {
+            channel.shutdown();
+            removeCacheEntry(replica);
+        }
+    }
+
+    public void propagateState() throws NoReplicasException, CannotGossipException {
+        for(Map.Entry<String, ManagedChannel> entry : getCacheEntries()){
+            tryPropagateState(entry.getKey(), entry.getValue());
+        }
+
+        if (isEmptyCache()) {
             cacheRefresh();
-            tryPropagateState(op);
-            cacheUpdate(cachedServer, state.getLedgerState().size()+1, cachedChannel);
+
+            for(Map.Entry<String, ManagedChannel> entry : getCacheEntries()){
+                tryPropagateState(entry.getKey(), entry.getValue());
+            }
+
+            if (isEmptyCache()) throw new CannotGossipException();
         }
     }
 }
