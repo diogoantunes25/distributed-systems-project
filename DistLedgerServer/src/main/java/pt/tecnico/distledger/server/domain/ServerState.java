@@ -12,19 +12,44 @@ import pt.tecnico.distledger.server.domain.operation.DeleteOp;
 import pt.tecnico.distledger.server.domain.operation.Operation;
 import pt.tecnico.distledger.server.domain.operation.TransferOp;
 import pt.tecnico.distledger.server.visitor.ExecutorVisitor;
+import pt.tecnico.distledger.gossip.Timestamp;
 
 public class ServerState {
-    volatile private List<Operation> ledger;
+    volatile private String target;
     volatile private AtomicBoolean active;
+    volatile private List<Operation> ledger;
     volatile private Map<String, Account> accounts;
+    volatile private Timestamp replicaTS;
+    volatile private Timestamp valueTS;
 
-    public ServerState() {
+    public ServerState(String target) {
+        this.target = target;
         this.ledger = new ArrayList<>();
         this.active = new AtomicBoolean(true);
 
         this.accounts = new HashMap<>();
         Account broker = Account.getBroker();
         this.accounts.put(broker.getUserId(), broker);
+    }
+
+    public String getTarget() {
+        return target;
+    }
+
+    public Timestamp getReplicaTS() {
+        return replicaTS;
+    }
+
+    public void setReplicaTS(Timestamp replicaTS) {
+        this.replicaTS = replicaTS;
+    }
+
+    public Timestamp getValueTS() {
+        return valueTS;
+    }
+
+    public void setValueTS(Timestamp valueTS) {
+        this.valueTS = valueTS;
     }
 
     public void assertIsActive() throws ServerUnavailableException {
