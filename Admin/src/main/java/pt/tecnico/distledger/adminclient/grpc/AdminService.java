@@ -40,7 +40,7 @@ public class AdminService extends Service {
             AdminDistLedger.ActivateResponse response = stub.withDeadlineAfter(TIMEOUT, TimeUnit.MILLISECONDS).activate(request);
 
             System.out.println("OK");
-            System.out.println(response);
+            // System.out.println(response);
         } catch (StatusRuntimeException e) {
             System.out.println(e.getStatus().getDescription());
             System.err.println(e.getMessage());
@@ -66,14 +66,14 @@ public class AdminService extends Service {
     private void tryDeactivate(String server) throws ServerUnavailableException {
         ManagedChannel channel = getServerChannel(server);
 
-        try{
+        try {
             AdminServiceGrpc.AdminServiceBlockingStub stub = AdminServiceGrpc.newBlockingStub(channel);
             AdminDistLedger.DeactivateRequest request =
                 AdminDistLedger.DeactivateRequest.newBuilder().build();
             AdminDistLedger.DeactivateResponse response = stub.withDeadlineAfter(TIMEOUT, TimeUnit.MILLISECONDS).deactivate(request);
 
             System.out.println("OK");
-            System.out.println(response);
+            // System.out.println(response);
         } catch (StatusRuntimeException e) {
             System.out.println(e.getStatus().getDescription());
             System.err.println(e.getMessage());
@@ -111,7 +111,7 @@ public class AdminService extends Service {
             
 
             System.out.println("OK");
-            System.out.println(response);
+            // System.out.println(response);
         } catch (StatusRuntimeException e) {
             System.out.println(e.getStatus().getDescription());
             System.err.println(e.getMessage());

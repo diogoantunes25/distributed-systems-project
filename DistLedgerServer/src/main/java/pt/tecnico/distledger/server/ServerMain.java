@@ -6,6 +6,7 @@ import java.util.concurrent.locks.ReentrantLock;
 import io.grpc.Server;
 import io.grpc.ServerBuilder;
 
+import pt.tecnico.distledger.gossip.Timestamp;
 import pt.tecnico.distledger.namingserver.exceptions.ServerRegistrationFailedException;
 import pt.tecnico.distledger.namingserver.exceptions.ServerUnregistrationFailedException;
 import pt.tecnico.distledger.namingserver.grpc.NamingServiceClient;

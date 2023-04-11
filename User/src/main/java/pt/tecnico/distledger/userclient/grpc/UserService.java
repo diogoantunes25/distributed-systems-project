@@ -6,6 +6,7 @@ import io.grpc.ManagedChannel;
 import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
 
+import pt.ulisboa.tecnico.distledger.contract.DistLedgerCommonDefinitions;
 import pt.ulisboa.tecnico.distledger.contract.user.UserServiceGrpc;
 import pt.ulisboa.tecnico.distledger.contract.user.UserDistLedger.*;
 import pt.tecnico.distledger.client.grpc.Service;
@@ -49,7 +50,7 @@ public class UserService extends Service {
             ts.merge(Timestamp.fromGrpc(response.getTs()));
             
             System.out.println("OK");
-            System.out.println(response);
+            // System.out.println(response);
         } catch (StatusRuntimeException e) {
             System.out.println(e.getStatus().getDescription());
             System.err.println(e.getMessage());
@@ -91,7 +92,7 @@ public class UserService extends Service {
             merge(ts, response.getTs());
 
             System.out.println("OK");
-            System.out.println(response);
+            // System.out.println(response);
         } catch (StatusRuntimeException e) {
             System.out.println(e.getStatus().getDescription());
             System.err.println(e.getMessage());
@@ -130,7 +131,7 @@ public class UserService extends Service {
             merge(ts, response.getTs());
             
             System.out.println("OK");
-            System.out.println(response);
+            // System.out.println(response);
         } catch (StatusRuntimeException e) {
             System.out.println(e.getStatus().getDescription());
             System.err.println(e.getMessage());
@@ -177,7 +178,7 @@ public class UserService extends Service {
             
             
             System.out.println("OK");
-            System.out.println(response);
+            // System.out.println(response);
         } catch (StatusRuntimeException e) {
             System.out.println(e.getStatus().getDescription());
             System.err.println(e.getMessage());

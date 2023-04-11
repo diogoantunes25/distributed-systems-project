@@ -5,6 +5,7 @@ import java.util.concurrent.locks.ReentrantLock;
 import io.grpc.*;
 import io.grpc.stub.StreamObserver;
 
+import pt.tecnico.distledger.gossip.Timestamp;
 import pt.ulisboa.tecnico.distledger.contract.user.UserDistLedger.*;
 import pt.ulisboa.tecnico.distledger.contract.user.UserServiceGrpc;
 
@@ -31,6 +32,7 @@ public class UserServiceImpl extends UserServiceGrpc.UserServiceImplBase {
     final String INVALID_TRANSFER_AMOUNT = "Amount To Transfer Must Positive";
     final String ONLY_PRIMARY_CAN_WRITE = "Write Operations Can Only Be Executed By Primary Server";
     final String INTERNAL_ERROR = "Internal Error";
+    final String DELETE_UNAVAILABLE = "Delete operations are not allowed";
 
 
     public UserServiceImpl(ServerState state, String qual) {
@@ -45,7 +47,7 @@ public class UserServiceImpl extends UserServiceGrpc.UserServiceImplBase {
 
     @Override
     public void deleteAccount(DeleteAccountRequest request, StreamObserver<DeleteAccountResponse> responseObserver) {
-        // TODO: throw unsupported error 
+        responseObserver.onError(Status.UNAVAILABLE.withDescription(DELETE_UNAVAILABLE).asRuntimeException());
     }
     
     @Override

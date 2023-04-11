@@ -10,6 +10,8 @@ import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.StatusRuntimeException;
 
+import pt.tecnico.distledger.gossip.Timestamp;
+import pt.ulisboa.tecnico.distledger.contract.DistLedgerCommonDefinitions;
 import pt.ulisboa.tecnico.distledger.contract.DistLedgerCommonDefinitions.LedgerState;
 import pt.ulisboa.tecnico.distledger.contract.distledgerserver.CrossServerDistLedger.*;
 import pt.ulisboa.tecnico.distledger.contract.distledgerserver.DistLedgerCrossServerServiceGrpc;
@@ -68,32 +70,21 @@ public class CrossServerClient {
         }
     }
 
-    private void tryPropagateState(String replica, ManagedChannel channel) {
+    private void tryPropagateState(String replica, ManagedChannel channel) throws NoReplicasException, CannotGossipException {
         DistLedgerCrossServerServiceGrpc.DistLedgerCrossServerServiceBlockingStub stub = DistLedgerCrossServerServiceGrpc.newBlockingStub(channel);
 
+        Timestamp t = new Timestamp(); // FIXME: should be prev (client's timestamp)
+
         MessageConverterVisitor visitor = new MessageConverterVisitor();
-        List<Operation> ledgerState = state.getLedgerState();
+        List<Operation> ledgerState = state.getLedgerState(t);
         
         LedgerState.Builder ledgerStateBuilder = LedgerState.newBuilder();
         ledgerState.forEach(o -> ledgerStateBuilder.addLedger(o.accept(visitor)));
         
         PropagateStateRequest request = PropagateStateRequest.newBuilder()
                 .setLog(ledgerStateBuilder.build())
-                .setReplicaTS(state.getReplicaTS())
+                .setReplicaTS((DistLedgerCommonDefinitions.Timestamp) null) // FIXME: should be actual timestamp
                 .build();
-
-        try {
-            stub.withDeadlineAfter(TIMEOUT, TimeUnit.MILLISECONDS).propagateState(request);
-        } catch (StatusRuntimeException e) {
-            channel.shutdown();
-            removeCacheEntry(replica);
-        }
-    }
-
-    public void propagateState() throws NoReplicasException, CannotGossipException {
-        for(Map.Entry<String, ManagedChannel> entry : getCacheEntries()){
-            tryPropagateState(entry.getKey(), entry.getValue());
-        }
 
         if (isEmptyCache()) {
             cacheRefresh();

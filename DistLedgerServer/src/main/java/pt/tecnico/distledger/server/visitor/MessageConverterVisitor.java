@@ -1,8 +1,6 @@
 package pt.tecnico.distledger.server.visitor;
 
-import pt.tecnico.distledger.server.domain.operation.CreateOp;
-import pt.tecnico.distledger.server.domain.operation.DeleteOp;
-import pt.tecnico.distledger.server.domain.operation.TransferOp;
+import pt.tecnico.distledger.server.domain.operation.*;
 import pt.ulisboa.tecnico.distledger.contract.DistLedgerCommonDefinitions.Operation;
 import pt.ulisboa.tecnico.distledger.contract.DistLedgerCommonDefinitions.OperationType;
 
@@ -29,5 +27,15 @@ public class MessageConverterVisitor implements Visitor<Operation> {
                         .setDestUserId(op.getDestAccount())
                         .setAmount(op.getAmount())
                         .build();
+    }
+
+    @Override
+    public Operation visit(GetBalanceOp op) {
+        throw new RuntimeException();
+    }
+
+    @Override
+    public Operation visit(GetLedgerOp op) {
+        throw new RuntimeException();
     }
 }

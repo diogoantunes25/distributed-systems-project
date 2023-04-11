@@ -4,6 +4,7 @@ import java.util.concurrent.locks.ReentrantLock;
 
 import io.grpc.stub.StreamObserver;
 
+import pt.tecnico.distledger.gossip.Timestamp;
 import pt.ulisboa.tecnico.distledger.contract.admin.AdminDistLedger.*;
 import pt.ulisboa.tecnico.distledger.contract.DistLedgerCommonDefinitions.LedgerState;
 import pt.ulisboa.tecnico.distledger.contract.admin.AdminServiceGrpc;
