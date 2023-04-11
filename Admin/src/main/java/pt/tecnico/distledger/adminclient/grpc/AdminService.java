@@ -9,11 +9,15 @@ import io.grpc.StatusRuntimeException;
 import pt.ulisboa.tecnico.distledger.contract.admin.AdminServiceGrpc;
 import pt.ulisboa.tecnico.distledger.contract.admin.AdminDistLedger;
 import pt.tecnico.distledger.client.grpc.Service;
+import pt.tecnico.distledger.gossip.Timestamp;
 
 import pt.tecnico.distledger.client.exceptions.ServerLookupFailedException;
 import pt.tecnico.distledger.client.exceptions.ServerUnavailableException;
 
 public class AdminService extends Service {
+
+    private Timestamp ts = new Timestamp();
+    private int requestID = 0;
 
     public void activate(String server) throws ServerUnavailableException, ServerLookupFailedException {
         if (!cacheHasServerEntry(server)) cacheRefresh(server);
@@ -98,8 +102,13 @@ public class AdminService extends Service {
 
         try{
             AdminServiceGrpc.AdminServiceBlockingStub stub = AdminServiceGrpc.newBlockingStub(channel);
+            AdminDistLedger.GetLedgerStateRequest request =
+                AdminDistLedger.GetLedgerStateRequest.newBuilder().setPrev(ts).build();
+            
+            AdminDistLedger.GetLedgerStateResponse response = stub.withDeadlineAfter(TIMEOUT, TimeUnit.MILLISECONDS).getLedgerState(request);
 
-            // TODO
+            merge(ts, response.getNew());
+            
 
             System.out.println("OK");
             System.out.println(response);
@@ -114,5 +123,12 @@ public class AdminService extends Service {
             }
         }
     }
+
+    // private void merge(Timestamp ts1, Timestamp ts2) {     
+    //     for(int i: ts1.getNonNullReplicas()){
+    //         if (ts1.getTime(i) > ts2.getTime(i)) continue;
+    //         else ts1.updateTime(i, ts2.getTime(i)));
+    //     }
+    // }
 
 }
