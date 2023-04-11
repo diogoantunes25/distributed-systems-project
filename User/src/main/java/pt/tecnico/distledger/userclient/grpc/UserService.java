@@ -3,23 +3,27 @@ package pt.tecnico.distledger.userclient.grpc;
 import java.util.concurrent.TimeUnit;
 
 import io.grpc.ManagedChannel;
+import io.grpc.ManagedChannelBuilder;
 import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
 
+import pt.tecnico.distledger.gossip.Timestamp;
 import pt.ulisboa.tecnico.distledger.contract.DistLedgerCommonDefinitions;
 import pt.ulisboa.tecnico.distledger.contract.user.UserServiceGrpc;
 import pt.ulisboa.tecnico.distledger.contract.user.UserDistLedger.*;
 import pt.tecnico.distledger.client.grpc.Service;
-import pt.tecnico.distledger.gossip.Timestamp;
 
 import pt.tecnico.distledger.client.exceptions.ServerLookupFailedException;
 import pt.tecnico.distledger.client.exceptions.ServerUnavailableException;
-
 
 public class UserService extends Service {
 
     private Timestamp ts = new Timestamp();
     private int requestID = 0;
+
+    public UserService(String id) {
+        super(id);
+    }
 
     public void createAccount(String server, String username)
             throws ServerLookupFailedException, ServerUnavailableException {
@@ -41,8 +45,8 @@ public class UserService extends Service {
             
             CreateAccountRequest request = CreateAccountRequest.newBuilder()
                                                                 .setUserId(username)
-                                                                .setPrev(ts)
-                                                                .setUpdateId(username+"-"+ String.valueOf(requestID++))
+                                                                .setPrev(ts.toGrpc())
+                                                                .setUpdateId(getId() + "-" + requestID++)
                                                                 .build();
 
             
@@ -50,7 +54,7 @@ public class UserService extends Service {
             ts.merge(Timestamp.fromGrpc(response.getTs()));
             
             System.out.println("OK");
-            // System.out.println(response);
+            System.out.println(response);
         } catch (StatusRuntimeException e) {
             System.out.println(e.getStatus().getDescription());
             System.err.println(e.getMessage());
@@ -64,45 +68,8 @@ public class UserService extends Service {
     }
 
     
-    public void deleteAccount(String server, String username)
-    throws ServerLookupFailedException, ServerUnavailableException {
-        if (!cacheHasServerEntry(server)) cacheRefresh(server);
-        
-        try {
-            tryDeleteAccount(server, username);
-        } catch (ServerUnavailableException e) {
-            cacheRefresh(server);
-            tryDeleteAccount(server, username);
-        }
-    }
-    
-    private void tryDeleteAccount(String server, String username) throws ServerUnavailableException {
-        ManagedChannel channel = getServerChannel(server);
-        
-        try{
-            UserServiceGrpc.UserServiceBlockingStub stub = UserServiceGrpc.newBlockingStub(channel);
-            
-            DeleteAccountRequest request = DeleteAccountRequest.newBuilder()
-                                                                .setUserId(username)
-                                                                .setPrev(ts)
-                                                                .setUpdateId(username+"-"+ String.valueOf(requestID++))
-                                                                .build();
-
-            DeleteAccountResponse response = stub.withDeadlineAfter(TIMEOUT, TimeUnit.MILLISECONDS).deleteAccount(request);
-            merge(ts, response.getTs());
-
-            System.out.println("OK");
-            // System.out.println(response);
-        } catch (StatusRuntimeException e) {
-            System.out.println(e.getStatus().getDescription());
-            System.err.println(e.getMessage());
-            System.out.println("");
-            
-            if (e.getStatus() == Status.UNAVAILABLE) {
-                channel.shutdown();
-                throw new ServerUnavailableException(e);
-            }
-        }
+    public void deleteAccount(String server, String username) {
+        // Do nothing (delete not provided in gossip)
     }
     
     public void balance(String server, String username) throws ServerUnavailableException, ServerLookupFailedException {
@@ -124,14 +91,14 @@ public class UserService extends Service {
             
             BalanceRequest request = BalanceRequest.newBuilder()
                                                     .setUserId(username)
-                                                    .setPrev(ts)
+                                                    .setPrev(ts.toGrpc())
                                                     .build();
 
             BalanceResponse response = stub.withDeadlineAfter(TIMEOUT, TimeUnit.MILLISECONDS).balance(request);
-            merge(ts, response.getTs());
-            
+            ts.merge(Timestamp.fromGrpc(response.getNew()));
+
             System.out.println("OK");
-            // System.out.println(response);
+            System.out.println(response);
         } catch (StatusRuntimeException e) {
             System.out.println(e.getStatus().getDescription());
             System.err.println(e.getMessage());
@@ -168,17 +135,15 @@ public class UserService extends Service {
                                                             .setAccountFrom(username)
                                                             .setAccountTo(dest)
                                                             .setAmount(amount)
-                                                            .setPrev(ts)
-                                                            .setUpdateId(username+"-"+ String.valueOf(requestID++))
+                                                            .setPrev(ts.toGrpc())
+                                                            .setUpdateId(getId() + "-" + requestID++)
                                                             .build();
 
             TransferToResponse response = stub.withDeadlineAfter(TIMEOUT, TimeUnit.MILLISECONDS).transferTo(request);
+            ts.merge(Timestamp.fromGrpc(response.getTs()));
 
-            merge(ts, response.getTs());
-            
-            
             System.out.println("OK");
-            // System.out.println(response);
+            System.out.println(response);
         } catch (StatusRuntimeException e) {
             System.out.println(e.getStatus().getDescription());
             System.err.println(e.getMessage());
@@ -190,17 +155,4 @@ public class UserService extends Service {
             }
         }
     }
-    
-    private ManagedChannel getServerChannel(String server) {
-        final ManagedChannel channel = ManagedChannelBuilder.forTarget(server).usePlaintext().build();
-    
-        return channel;
-    }
-
-//     private void merge(Timestamp ts1, Timestamp ts2) {     
-//         for(int i: ts1.getNonNullReplicas()){
-//             if (ts1.getTime(i) > ts2.getTime(i)) continue;
-//             else ts1.updateTime(i, ts2.getTime(i));
-//         }
-//     }
 }

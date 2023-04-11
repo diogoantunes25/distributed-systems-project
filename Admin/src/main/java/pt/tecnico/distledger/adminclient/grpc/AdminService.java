@@ -19,6 +19,10 @@ public class AdminService extends Service {
     private Timestamp ts = new Timestamp();
     private int requestID = 0;
 
+    public AdminService(String id) {
+        super(id);
+    }
+
     public void activate(String server) throws ServerUnavailableException, ServerLookupFailedException {
         if (!cacheHasServerEntry(server)) cacheRefresh(server);
 
@@ -40,7 +44,7 @@ public class AdminService extends Service {
             AdminDistLedger.ActivateResponse response = stub.withDeadlineAfter(TIMEOUT, TimeUnit.MILLISECONDS).activate(request);
 
             System.out.println("OK");
-            // System.out.println(response);
+            System.out.println(response);
         } catch (StatusRuntimeException e) {
             System.out.println(e.getStatus().getDescription());
             System.err.println(e.getMessage());
@@ -73,7 +77,7 @@ public class AdminService extends Service {
             AdminDistLedger.DeactivateResponse response = stub.withDeadlineAfter(TIMEOUT, TimeUnit.MILLISECONDS).deactivate(request);
 
             System.out.println("OK");
-            // System.out.println(response);
+            System.out.println(response);
         } catch (StatusRuntimeException e) {
             System.out.println(e.getStatus().getDescription());
             System.err.println(e.getMessage());
@@ -102,16 +106,15 @@ public class AdminService extends Service {
 
         try{
             AdminServiceGrpc.AdminServiceBlockingStub stub = AdminServiceGrpc.newBlockingStub(channel);
-            AdminDistLedger.GetLedgerStateRequest request =
-                AdminDistLedger.GetLedgerStateRequest.newBuilder().setPrev(ts).build();
+            AdminDistLedger.getLedgerStateRequest request =
+                AdminDistLedger.getLedgerStateRequest.newBuilder().setPrev(ts.toGrpc()).build();
             
-            AdminDistLedger.GetLedgerStateResponse response = stub.withDeadlineAfter(TIMEOUT, TimeUnit.MILLISECONDS).getLedgerState(request);
+            AdminDistLedger.getLedgerStateResponse response = stub.withDeadlineAfter(TIMEOUT, TimeUnit.MILLISECONDS).getLedgerState(request);
 
-            merge(ts, response.getNew());
-            
+            ts.merge(Timestamp.fromGrpc(response.getNew()));
 
             System.out.println("OK");
-            // System.out.println(response);
+            System.out.println(response);
         } catch (StatusRuntimeException e) {
             System.out.println(e.getStatus().getDescription());
             System.err.println(e.getMessage());
@@ -123,12 +126,4 @@ public class AdminService extends Service {
             }
         }
     }
-
-    // private void merge(Timestamp ts1, Timestamp ts2) {     
-    //     for(int i: ts1.getNonNullReplicas()){
-    //         if (ts1.getTime(i) > ts2.getTime(i)) continue;
-    //         else ts1.updateTime(i, ts2.getTime(i)));
-    //     }
-    // }
-
 }

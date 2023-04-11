@@ -17,6 +17,15 @@ public abstract class Service {
 
     // Caches ManagedChannel for qualifier
     protected final Map<String, ManagedChannel> serverCache = new HashMap<>();
+    private String id;
+
+    public Service(String id) {
+        this.id = id;
+    }
+
+    public String getId() {
+        return id;
+    }
 
     protected boolean cacheHasServerEntry(String server) {
         return serverCache.containsKey(server);
