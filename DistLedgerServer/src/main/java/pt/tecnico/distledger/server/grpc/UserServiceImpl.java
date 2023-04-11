@@ -6,16 +6,12 @@ import io.grpc.*;
 import io.grpc.stub.StreamObserver;
 
 import pt.tecnico.distledger.gossip.Timestamp;
+import pt.tecnico.distledger.server.domain.UpdateId;
+import pt.tecnico.distledger.server.exceptions.OperationAlreadyExecutedException;
 import pt.ulisboa.tecnico.distledger.contract.user.UserDistLedger.*;
 import pt.ulisboa.tecnico.distledger.contract.user.UserServiceGrpc;
 
 import pt.tecnico.distledger.server.domain.ServerState;
-import pt.tecnico.distledger.server.domain.exceptions.*;
-import pt.tecnico.distledger.server.domain.operation.CreateOp;
-import pt.tecnico.distledger.server.domain.operation.DeleteOp;
-import pt.tecnico.distledger.server.domain.operation.TransferOp;
-import pt.tecnico.distledger.server.exceptions.CannotPropagateStateException;
-import pt.tecnico.distledger.server.exceptions.NoSecundaryServersException;
 
 public class UserServiceImpl extends UserServiceGrpc.UserServiceImplBase {
 
@@ -23,16 +19,8 @@ public class UserServiceImpl extends UserServiceGrpc.UserServiceImplBase {
     private ServerState state;
     private CrossServerClient crossServerService;
 
-    final String ACCOUNT_ALREADY_EXISTS = "This Account Already Exists";
-    final String ACCOUNT_DOES_NOT_EXIST = "This Account Does Not Exist";
-    final String NOT_ENOUGH_BALANCE = "Not Enough Balance";
-    final String BALANCE_NOT_ZERO = "Balance Not Zero";
-    final String BROKER_CANNOT_BE_DELETED = "Broker Cannot Be Deleted";
-    final String SERVER_UNAVAILABLE = "Server Unavailable";
-    final String INVALID_TRANSFER_AMOUNT = "Amount To Transfer Must Positive";
-    final String ONLY_PRIMARY_CAN_WRITE = "Write Operations Can Only Be Executed By Primary Server";
-    final String INTERNAL_ERROR = "Internal Error";
     final String DELETE_UNAVAILABLE = "Delete operations are not allowed";
+    final String UPDATE_ALREADY_PROCESSED = "Update with provided uid was already processed";
 
 
     public UserServiceImpl(ServerState state, String qual) {
@@ -42,7 +30,20 @@ public class UserServiceImpl extends UserServiceGrpc.UserServiceImplBase {
 
     @Override
     public void createAccount(CreateAccountRequest request, StreamObserver<CreateAccountResponse> responseObserver) {
-        // TODO
+        try {
+            Timestamp newTS = state.createAccount(new UpdateId(request.getUpdateId()), request.getUserId(),
+                    Timestamp.fromGrpc(request.getPrev()));
+
+            CreateAccountResponse response = CreateAccountResponse.newBuilder()
+                    .setTs(newTS.toGrpc())
+                    .build();
+
+            responseObserver.onNext(response);
+            responseObserver.onCompleted();
+        } catch (OperationAlreadyExecutedException e) {
+            e.printStackTrace();
+            responseObserver.onError(Status.CANCELLED.withDescription(UPDATE_ALREADY_PROCESSED).asRuntimeException());
+        }
     }
 
     @Override
@@ -52,11 +53,29 @@ public class UserServiceImpl extends UserServiceGrpc.UserServiceImplBase {
     
     @Override
     public void balance(BalanceRequest request, StreamObserver<BalanceResponse> responseObserver) {
-        // TODO
+        ServerState.Read<Integer> read = state.getBalance(request.getUserId(), Timestamp.fromGrpc(request.getPrev()));
+
+        BalanceResponse response = BalanceResponse.newBuilder()
+                .setValue(read.getValue())
+                .setNew(read.getNewTs().toGrpc())
+                .build();
     }
 
     @Override
     public void transferTo(TransferToRequest request, StreamObserver<TransferToResponse> responseObserver) {
-        // TODO
+        try {
+            Timestamp newTS = state.transferTo(new UpdateId(request.getUpdateId()), request.getAccountFrom(),
+                    request.getAccountTo(), request.getAmount(), Timestamp.fromGrpc(request.getPrev()));
+
+            TransferToResponse response = TransferToResponse.newBuilder()
+                    .setTs(newTS.toGrpc())
+                    .build();
+
+            responseObserver.onNext(response);
+            responseObserver.onCompleted();
+        } catch (OperationAlreadyExecutedException e) {
+            e.printStackTrace();
+            responseObserver.onError(Status.CANCELLED.withDescription(UPDATE_ALREADY_PROCESSED).asRuntimeException());
+        }
     }
 }

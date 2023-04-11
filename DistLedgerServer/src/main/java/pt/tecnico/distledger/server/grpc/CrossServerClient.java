@@ -70,18 +70,17 @@ public class CrossServerClient {
         }
     }
 
-    private void tryPropagateState(String replica, ManagedChannel channel) throws NoReplicasException, CannotGossipException {
+    private void tryPropagateState(String replica, ManagedChannel channel, Timestamp prev) throws NoReplicasException, CannotGossipException {
         DistLedgerCrossServerServiceGrpc.DistLedgerCrossServerServiceBlockingStub stub = DistLedgerCrossServerServiceGrpc.newBlockingStub(channel);
 
-        Timestamp t = new Timestamp(); // FIXME: should be prev (client's timestamp)
-
         MessageConverterVisitor visitor = new MessageConverterVisitor();
-        List<Operation> ledgerState = state.getLedgerState(t);
+        ServerState.Read<List<Operation>> ledgerState = state.getLedgerState(prev);
         
         LedgerState.Builder ledgerStateBuilder = LedgerState.newBuilder();
-        ledgerState.forEach(o -> ledgerStateBuilder.addLedger(o.accept(visitor)));
+        ledgerState.getValue().forEach(o -> ledgerStateBuilder.addLedger(o.accept(visitor)));
         
         PropagateStateRequest request = PropagateStateRequest.newBuilder()
+                .setReplicaTS(ledgerState.getNewTs().toGrpc())
                 .setLog(ledgerStateBuilder.build())
                 .setReplicaTS((DistLedgerCommonDefinitions.Timestamp) null) // FIXME: should be actual timestamp
                 .build();
@@ -90,7 +89,7 @@ public class CrossServerClient {
             cacheRefresh();
 
             for(Map.Entry<String, ManagedChannel> entry : getCacheEntries()){
-                tryPropagateState(entry.getKey(), entry.getValue());
+                tryPropagateState(entry.getKey(), entry.getValue(), prev);
             }
 
             if (isEmptyCache()) throw new CannotGossipException();

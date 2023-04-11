@@ -36,7 +36,7 @@ public class ServerMain {
         try {
             namingServiceClient.register(NamingServer.SERVICE_NAME, qual, target);
 
-            ServerState state = new ServerState(target);
+            ServerState state = new ServerState(target, qual);
             Server server = ServerBuilder.forPort(port)
                     .addService(new AdminServiceImpl(state))
                     .addService(new UserServiceImpl(state, qual))

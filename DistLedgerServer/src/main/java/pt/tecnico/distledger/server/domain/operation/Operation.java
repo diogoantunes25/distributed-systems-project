@@ -10,5 +10,9 @@ public abstract class Operation {
         this.prev = t;
     }
 
+    public Timestamp getPrev() {
+        return prev;
+    }
+
     public abstract <T> T accept(Visitor<T> visitor);
 }

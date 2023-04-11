@@ -3,6 +3,7 @@ package pt.tecnico.distledger.server.domain.operation;
 import pt.tecnico.distledger.gossip.Timestamp;
 import pt.tecnico.distledger.server.domain.UpdateId;
 
+import java.sql.Time;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -10,12 +11,22 @@ public abstract class UpdateOp extends Operation {
     private String account;
     private UpdateId uid;
     private AtomicBoolean stable;
+    private Timestamp ts;
 
-    public UpdateOp(Timestamp t, UpdateId uid, String fromAccount) {
-        super(t);
+    public UpdateOp(Timestamp prev, Timestamp ts, UpdateId uid, String fromAccount) {
+        super(prev);
         this.account = fromAccount;
         this.uid = uid;
         this.stable = new AtomicBoolean();
+        this.ts = ts;
+    }
+
+    public Timestamp getTs() {
+        return ts;
+    }
+
+    public UpdateId getUid() {
+        return uid;
     }
 
     public String getAccount() {

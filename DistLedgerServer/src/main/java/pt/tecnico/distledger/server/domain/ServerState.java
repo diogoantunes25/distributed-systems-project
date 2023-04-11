@@ -1,17 +1,18 @@
 package pt.tecnico.distledger.server.domain;
 
+import java.sql.Time;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
+import com.google.rpc.context.AttributeContext;
 import pt.tecnico.distledger.gossip.Timestamp;
 import pt.tecnico.distledger.server.domain.exceptions.*;
 import pt.tecnico.distledger.server.domain.operation.*;
+import pt.tecnico.distledger.server.exceptions.OperationAlreadyExecutedException;
 import pt.tecnico.distledger.server.visitor.ExecutorVisitor;
-import pt.tecnico.distledger.gossip.Timestamp;
 import pt.tecnico.distledger.server.visitor.Visitor;
 
 public class ServerState {
@@ -23,16 +24,27 @@ public class ServerState {
     volatile private Timestamp valueTS;
     private ReentrantLock lock;
     private Condition condition;
-    volatile private Timestamp stateTS;
-    volatile private Set<UpdateOp> processed = ConcurrentHashMap.newKeySet();
+    private Thread worker;
+    private String qual;
 
-    public ServerState(String target) {
+    public ServerState(String target, String qual) {
         this.target = target;
         this.ledger = new ArrayList<>();
         this.active = new AtomicBoolean(true);
         this.lock = new ReentrantLock();
         this.condition = lock.newCondition();
-        this.stateTS = new Timestamp();
+        this.valueTS = new Timestamp();
+        this.replicaTS = new Timestamp();
+        this.qual = qual;
+
+        this.worker = new Thread(() -> {
+            try {
+                tryProgress();
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+        });
+        this.worker.start();
 
         this.accounts = new HashMap<>();
         Account broker = Account.getBroker();
@@ -47,42 +59,38 @@ public class ServerState {
         return replicaTS;
     }
 
-    public void setReplicaTS(Timestamp replicaTS) {
-        this.replicaTS = replicaTS;
-    }
-
     public Timestamp getValueTS() {
         return valueTS;
     }
 
-    public void setValueTS(Timestamp valueTS) {
-        this.valueTS = valueTS;
+    public boolean isStable(Timestamp t) {
+        return Timestamp.lessOrEqual(t, valueTS);
     }
 
     // Public operations
 
-    public void createAccount(UpdateId updateId, String account, Timestamp prev)
-            throws AccountAlreadyExistsException, ServerUnavailableException {
+    public Timestamp createAccount(UpdateId updateId, String account, Timestamp prev)
+            throws ServerUnavailableException, OperationAlreadyExecutedException {
         assertIsActive();
-        addUpdate(new CreateOp(prev, updateId, account));
+        Timestamp ts = replicaTS.increaseAndGetCopy(target);
+        addUpdate(new CreateOp(prev, prev.getCopy().set(target, ts.getTime(target)), updateId, account));
+
+        return ts;
     }
 
     public void deleteAccount(UpdateId updateId, String account, Timestamp prev)
-            throws AccountDoesNotExistException, BalanceNotZeroException,
-            ServerUnavailableException, BrokerCannotBeDeletedException {
+            throws ServerUnavailableException {}
+
+    public Timestamp transferTo(UpdateId updateId, String accountFrom, String accountTo, int amount, Timestamp prev)
+            throws ServerUnavailableException, OperationAlreadyExecutedException {
         assertIsActive();
-        addUpdate(new DeleteOp(prev, updateId, account));
+        Timestamp ts = replicaTS.increaseAndGetCopy(target);
+        addUpdate(new TransferOp(prev, prev.getCopy().set(target, ts.getTime(target)), updateId, accountFrom, accountTo, amount));
+        return ts;
     }
 
-    public void transferTo(UpdateId updateId, String accountFrom, String accountTo, int amount, Timestamp prev)
-            throws AccountDoesNotExistException, NotEnoughBalanceException, ServerUnavailableException,
-            InvalidTransferAmountException {
-        assertIsActive();
-        addUpdate(new TransferOp(prev, updateId, accountFrom, accountTo, amount));
-    }
-
-    public int getBalance(String userId, Timestamp prev)
-            throws AccountDoesNotExistException, ServerUnavailableException {
+    public Read<Integer> getBalance(String userId, Timestamp prev)
+            throws ServerUnavailableException {
         assertIsActive();
         return read(new GetBalanceOp(prev, userId));
     }
@@ -99,7 +107,7 @@ public class ServerState {
         return accounts;
     }
 
-    public List<Operation> getLedgerState(Timestamp prev) {
+    public Read<List<Operation>> getLedgerState(Timestamp prev) {
         assertIsActive();
         return read(new GetLedgerOp(prev));
     }
@@ -162,9 +170,11 @@ public class ServerState {
         }
     }
 
-    private <T> T read(ReadOp op) {
-        Visitor<T> visitor = new ExecutorVisitor<>(this);
-        return op.accept(visitor);
+    private <T> Read<T> read(ReadOp op) {
+        synchronized (valueTS) {
+            Visitor<T> visitor = new ExecutorVisitor<>(this);
+            return new Read(op.accept(visitor), valueTS.getCopy());
+        }
     }
 
     // Only one thread executes this function
@@ -175,17 +185,23 @@ public class ServerState {
             int ledgerSize = ledger.size();
             while (true) {
                 boolean updated = false;
-                int i = 0;
-                while (i < ledgerSize) {
-                    UpdateOp op = ledger.get(i++);
+                for (int i = 0; i < ledgerSize; i++) {
+                    UpdateOp op = ledger.get(i);
                     if (op.isStable()) continue;
-                    try {
-                        op.accept(visitor);
-                    } catch (DistLedgerRuntimeException e) {
-                        System.out.println("Found invalid operation");
-                        e.printStackTrace();
+
+                    if (!Timestamp.lessOrEqual(op.getPrev(), valueTS)) continue;
+                    op.setStable();
+
+                    synchronized (valueTS) {
+                        try {
+                            op.accept(visitor);
+                        } catch (DistLedgerRuntimeException e) {
+                            System.out.println("Found invalid operation");
+                        } finally {
+                            this.valueTS.merge(op.getTs());
+                            updated = true;
+                        }
                     }
-                    if (op.isStable()) updated = true;
                 }
 
                 if (updated) continue;
@@ -202,8 +218,6 @@ public class ServerState {
         }
 
     }
-
-    // Private getters and setters
 
     public void _createAccount(String userId)
             throws AccountAlreadyExistsException, ServerUnavailableException {
@@ -240,9 +254,14 @@ public class ServerState {
         return ledgerCopy;
     }
 
-    public void addUpdate(UpdateOp op) {
-        if (processed.contains(op)) return;
-        processed.add(op);
+    private boolean executed(UpdateOp op) {
+        for (UpdateOp operation: ledger) if (operation.getUid().equals(op)) return true;
+        return false;
+    }
+
+    // Returns new replica TS
+    public void addUpdate(UpdateOp op) throws OperationAlreadyExecutedException {
+        if (executed(op)) throw new OperationAlreadyExecutedException(op.getUid());
 
         try {
             lock.lock();
@@ -250,6 +269,24 @@ public class ServerState {
             condition.signal();
         } finally {
             lock.unlock();
+        }
+    }
+
+    public class Read<T> {
+        private T value;
+        private Timestamp newTs;
+
+        public Read(T Value, Timestamp t) {
+            this.value = value;
+            this.newTs = t;
+        }
+
+        public T getValue() {
+            return value;
+        }
+
+        public Timestamp getNewTs() {
+            return newTs;
         }
     }
 }
