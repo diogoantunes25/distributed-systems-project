@@ -59,6 +59,9 @@ public class UserServiceImpl extends UserServiceGrpc.UserServiceImplBase {
                 .setValue(read.getValue())
                 .setNew(read.getNewTs().toGrpc())
                 .build();
+
+        responseObserver.onNext(response);
+        responseObserver.onCompleted();
     }
 
     @Override

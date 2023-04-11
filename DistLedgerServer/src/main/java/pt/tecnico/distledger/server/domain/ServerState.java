@@ -223,6 +223,7 @@ public class ServerState {
             throws AccountAlreadyExistsException, ServerUnavailableException {
         assertCanCreateAccount(userId);
         accounts.put(userId, new Account(userId));
+        System.out.printf("[ServerState] Created account with id %s\n", userId);
     }
 
     public void _deleteAccount(String userId)
@@ -238,11 +239,13 @@ public class ServerState {
         assertCanTransferTo(accountFrom, accountTo, amount);
         accounts.get(accountFrom).decreaseBalance(amount);
         accounts.get(accountTo).increaseBalance(amount);
+        System.out.printf("[ServerState] Transferred %s from %s to %s\n", amount, accountFrom, accountTo);
     }
 
     public Integer _getBalance(String userId)
             throws AccountDoesNotExistException, ServerUnavailableException {
         assertCanGetBalance(userId);
+        System.out.printf("[ServerState] Got balance for %s - is %s \n", userId, accounts.get(userId).getBalance());
         return accounts.get(userId).getBalance();
     }
 
@@ -276,7 +279,8 @@ public class ServerState {
         private T value;
         private Timestamp newTs;
 
-        public Read(T Value, Timestamp t) {
+        public Read(T value, Timestamp t) {
+            System.out.printf("[Read] new read with value %s\n", value);
             this.value = value;
             this.newTs = t;
         }

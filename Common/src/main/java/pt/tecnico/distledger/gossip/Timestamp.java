@@ -1,10 +1,7 @@
 package pt.tecnico.distledger.gossip;
 
 import java.sql.Time;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class Timestamp {
     private Map<String, Integer> times;
@@ -30,13 +27,13 @@ public class Timestamp {
         return time == null ? 0 : time;
     }
 
-    public synchronized List<String> getNonNullReplicas() {
-        return (List<String>) times.keySet();
+    public synchronized Collection<String> getNonNullReplicas() {
+        return times.keySet();
     }
 
     public static boolean lessOrEqual(Timestamp t1, Timestamp t2) {
-        for(String qual: t1.getNonNullReplicas())
-            if (t1.getTime(qual) > t2.getTime(qual)) return false;
+        for(String target: t1.getNonNullReplicas())
+            if (t1.getTime(target) > t2.getTime(target)) return false;
 
         return true;
     }
@@ -55,8 +52,9 @@ public class Timestamp {
         this.times = newTimes;
     }
 
-    public synchronized Timestamp increaseAndGetCopy(String qual) {
-        times.put(qual, times.get(qual)+1);
+    public synchronized Timestamp increaseAndGetCopy(String target) {
+        times.putIfAbsent(target, 0);
+        times.put(target, times.get(target)+1);
         return getCopy();
     }
 
