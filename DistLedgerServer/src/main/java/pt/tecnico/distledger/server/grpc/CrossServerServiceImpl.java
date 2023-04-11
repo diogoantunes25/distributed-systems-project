@@ -15,6 +15,9 @@ import pt.tecnico.distledger.server.domain.operation.CreateOp;
 import pt.tecnico.distledger.server.domain.operation.DeleteOp;
 import pt.tecnico.distledger.server.domain.operation.Operation;
 import pt.tecnico.distledger.server.domain.operation.TransferOp;
+import pt.tecnico.distledger.server.exceptions.OperationAlreadyExecutedException;
+import pt.tecnico.distledger.server.domain.UpdateId;
+import pt.tecnico.distledger.gossip.Timestamp;
 import pt.tecnico.distledger.server.domain.ServerState;
 
 public class CrossServerServiceImpl extends DistLedgerCrossServerServiceGrpc.DistLedgerCrossServerServiceImplBase {
@@ -30,6 +33,43 @@ public class CrossServerServiceImpl extends DistLedgerCrossServerServiceGrpc.Dis
 
     @Override
     public void propagateState(PropagateStateRequest request, StreamObserver<PropagateStateResponse> responseStreamObserver) {
-        // TODO
+        request.getLog().getLedgerList().forEach(op -> {
+            try {
+                switch (op.getType()) {
+                    case OP_TRANSFER_TO:
+                    state.addUpdate(new TransferOp(
+                        Timestamp.fromGrpc(op.getPrev()), 
+                        Timestamp.fromGrpc(op.getTs()), 
+                        new UpdateId(op.getUpdateId()),
+                        op.getUserId(), 
+                        op.getDestUserId(), 
+                        op.getAmount()
+                    ));
+                    break;
+                case OP_CREATE_ACCOUNT:
+                    state.addUpdate(new CreateOp(
+                        Timestamp.fromGrpc(op.getPrev()), 
+                        Timestamp.fromGrpc(op.getTs()), 
+                        new UpdateId(op.getUpdateId()),
+                        op.getUserId()
+                    ));
+                    break;
+                case OP_DELETE_ACCOUNT:
+                    state.addUpdate(new DeleteOp(
+                        Timestamp.fromGrpc(op.getPrev()), 
+                        Timestamp.fromGrpc(op.getTs()), 
+                        new UpdateId(op.getUpdateId()),
+                        op.getUserId()
+                    ));
+                    break;
+                default:
+                    responseStreamObserver.onError(Status.INVALID_ARGUMENT.withDescription(INVALID_LEDGER_STATE).asRuntimeException());
+                }
+            } catch (OperationAlreadyExecutedException e) {}
+        });
+        state.getReplicaTS().merge(Timestamp.fromGrpc(request.getReplicaTS()));
+
+        responseStreamObserver.onNext(PropagateStateResponse.newBuilder().build());
+        responseStreamObserver.onCompleted();
     }
 }
