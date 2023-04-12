@@ -77,7 +77,7 @@ public class CrossServerClient {
         for (String replica : replicas) cache.put(replica, ManagedChannelBuilder.forTarget(replica).usePlaintext().build());
     }
 
-    public void propagateState() throws NoReplicasException, CannotGossipException {
+    public synchronized void propagateState() throws NoReplicasException, CannotGossipException {
         if (isEmptyCache()) cacheRefresh();
 
         // Get state to propagate
