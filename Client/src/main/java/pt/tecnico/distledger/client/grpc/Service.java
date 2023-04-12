@@ -12,18 +12,18 @@ import pt.tecnico.distledger.namingserver.grpc.NamingServiceClient;
 import pt.tecnico.distledger.namingserver.NamingServer;
 
 public abstract class Service {
-    protected NamingServiceClient namingServiceClient = new NamingServiceClient();
     protected final static int TIMEOUT = 5000; // milliseconds
-
+    
     // Caches ManagedChannel for qualifier
     protected final Map<String, ManagedChannel> serverCache = new HashMap<>();
-    private String id;
+    protected final NamingServiceClient namingServiceClient = new NamingServiceClient();
+    protected final long id = fetchId();
 
-    public Service(String id) {
-        this.id = id;
+    private long fetchId() {
+        return this.namingServiceClient.getClientId();
     }
 
-    public String getId() {
+    public long getId() {
         return id;
     }
 

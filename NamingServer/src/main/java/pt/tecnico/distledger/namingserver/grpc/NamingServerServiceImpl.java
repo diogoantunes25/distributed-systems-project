@@ -70,4 +70,12 @@ public class NamingServerServiceImpl extends NamingServiceGrpc.NamingServiceImpl
             responseObserver.onError(Status.NOT_FOUND.withDescription(NOT_POSSIBLE_TO_REMOVE).asRuntimeException());
         }
     }
+
+    @Override
+    public void getClientId(GetClientIdRequest request, StreamObserver<GetClientIdResponse> responseObserver) {
+        responseObserver.onNext(GetClientIdResponse.newBuilder().setClientId(
+            namingServer.getClientId()
+        ).build());
+        responseObserver.onCompleted();
+    }
 }

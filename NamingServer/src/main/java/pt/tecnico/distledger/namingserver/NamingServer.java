@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
 import io.grpc.Server;
@@ -21,6 +22,7 @@ public class NamingServer {
     public final static String SECONDARY_QUAL = "B";
 
     private Map<String, ServiceEntry> services = new HashMap<String, ServiceEntry>();
+    private AtomicLong clientId = new AtomicLong(0);
 
     public static void main(String[] args) throws InterruptedException, IOException {
         if (args.length < 1) {
@@ -86,5 +88,9 @@ public class NamingServer {
         }
 
         return services.get(serviceName).getServers(qualifier);
+    }
+
+    public long getClientId() {
+        return clientId.incrementAndGet();
     }
 }

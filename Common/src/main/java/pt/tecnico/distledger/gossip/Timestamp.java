@@ -65,7 +65,7 @@ public class Timestamp {
     }
 
     public static Timestamp fromGrpc(pt.ulisboa.tecnico.distledger.contract.DistLedgerCommonDefinitions.Timestamp t) {
-        Map<String, Integer> times = t.getTimestamp();
+        Map<String, Integer> times = t.getTimestampMap();
         return new Timestamp(times);
     }
 

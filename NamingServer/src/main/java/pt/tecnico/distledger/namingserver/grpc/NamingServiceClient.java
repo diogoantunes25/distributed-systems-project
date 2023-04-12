@@ -67,6 +67,12 @@ public class NamingServiceClient {
         }
     }
 
+    public long getClientId() {
+        GetClientIdRequest request = GetClientIdRequest.newBuilder().build();
+        GetClientIdResponse response = stub.withDeadlineAfter(TIMEOUT, TimeUnit.MILLISECONDS).getClientId(request);
+        return response.getClientId();
+    }
+
     public void delete() {
         this.channel.shutdown();
     }

@@ -17,11 +17,6 @@ import pt.tecnico.distledger.client.exceptions.ServerUnavailableException;
 public class AdminService extends Service {
 
     private Timestamp ts = new Timestamp();
-    private int requestID = 0;
-
-    public AdminService(String id) {
-        super(id);
-    }
 
     public void activate(String server) throws ServerUnavailableException, ServerLookupFailedException {
         if (!cacheHasServerEntry(server)) cacheRefresh(server);

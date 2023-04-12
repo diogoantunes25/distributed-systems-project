@@ -19,10 +19,6 @@ public class UserService extends Service {
     private Timestamp ts = new Timestamp();
     private int requestID = 0;
 
-    public UserService(String id) {
-        super(id);
-    }
-
     public void createAccount(String server, String username)
             throws ServerLookupFailedException, ServerUnavailableException {
         if (!cacheHasServerEntry(server)) cacheRefresh(server);
