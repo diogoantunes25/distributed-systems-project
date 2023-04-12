@@ -1,6 +1,5 @@
 package pt.tecnico.distledger.gossip;
 
-import java.sql.Time;
 import java.util.*;
 
 public class Timestamp {
@@ -79,5 +78,26 @@ public class Timestamp {
         }
 
         return builder.build();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Timestamp timestamp = (Timestamp) o;
+
+        for (String target: times.keySet()) {
+            Integer t = timestamp.getTimes().get(target);
+            if (t == null) return false;
+            if (t != times.get(target)) return false;
+        }
+
+        for (String target: timestamp.getNonNullReplicas()) {
+            Integer t = times.get(target);
+            if (t == null) return false;
+            if (t != timestamp.getTime(target)) return false;
+        }
+
+        return true;
     }
 }

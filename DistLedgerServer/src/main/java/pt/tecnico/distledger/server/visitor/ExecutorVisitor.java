@@ -51,7 +51,7 @@ public class ExecutorVisitor<T> implements Visitor<T>{
         try {
             return (T) state._getBalance(op.getUserId());
         } catch (AccountDoesNotExistException e) {
-            throw new RuntimeException(e);
+            throw new DistLedgerRuntimeException(String.format("Account for %s does not exist", op.getUserId()), e);
         }
     }
 

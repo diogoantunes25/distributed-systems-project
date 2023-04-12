@@ -41,6 +41,8 @@ public abstract class UpdateOp extends Operation {
         return stable.get();
     }
 
+    public abstract UpdateOp getCopy();
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

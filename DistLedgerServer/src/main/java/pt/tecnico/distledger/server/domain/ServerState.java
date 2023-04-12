@@ -6,6 +6,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.stream.Collectors;
 
 import com.google.rpc.context.AttributeContext;
 import pt.tecnico.distledger.gossip.Timestamp;
@@ -67,8 +68,18 @@ public class ServerState {
         return Timestamp.lessOrEqual(t, valueTS);
     }
 
-    // Public operations
+    public Read<List<UpdateOp>> getLedgerCopy() {
+        try {
+            lock.lock();
+            List<UpdateOp> copy = new ArrayList<>();
+            for (UpdateOp op: ledger) copy.add(op.getCopy());
+            return new Read<>(copy, replicaTS.getCopy());
+        } finally {
+            lock.unlock();
+        }
+    }
 
+    // Public operations
     public Timestamp createAccount(UpdateId updateId, String account, Timestamp prev)
             throws ServerUnavailableException, OperationAlreadyExecutedException {
         assertIsActive();
@@ -183,13 +194,22 @@ public class ServerState {
         Visitor<Void> visitor = new ExecutorVisitor<>(this);
         try {
             int ledgerSize = ledger.size();
+            Timestamp ts = getReplicaTS().getCopy();
             while (true) {
                 boolean updated = false;
                 for (int i = 0; i < ledgerSize; i++) {
                     UpdateOp op = ledger.get(i);
-                    if (op.isStable()) continue;
+                    if (op.isStable()) {
+                        System.out.printf("[ServerState] update %s was already stable, skipping\n", op.getUid().getUid());
+                        continue;
+                    }
 
-                    if (!Timestamp.lessOrEqual(op.getPrev(), valueTS)) continue;
+                    if (!isStable(op.getPrev())) {
+                        System.out.printf("[ServerState] update %s is not stable, skipping\n", op.getUid().getUid());
+                        continue;
+                    }
+
+                    System.out.printf("[ServerState] Update %s is now stable, running.\n", op.getUid().getUid());
                     op.setStable();
 
                     synchronized (valueTS) {
@@ -207,10 +227,13 @@ public class ServerState {
                 if (updated) continue;
 
                 lock.lock();
-                while (ledgerSize == ledger.size()) {
+                while (ledgerSize == ledger.size() && ts.equals(getReplicaTS())) {
                     condition.await();
+                    System.out.printf("[ServerState] await interrupted\n");
                 }
+                System.out.printf("[ServerState] conditions changed, moving on\n");
                 ledgerSize = ledger.size();
+                ts = getReplicaTS().getCopy();
                 lock.unlock();
             }
         } finally {
@@ -268,11 +291,40 @@ public class ServerState {
 
         try {
             lock.lock();
+            System.out.printf("[ServerState] update %s added to log\n", op.getUid().getUid());
             ledger.add(op);
             condition.signal();
         } finally {
             lock.unlock();
         }
+    }
+
+    /**
+     * Merges log from other replica into current log
+     * @param log incoming log
+     * @param peerTS incoming timestamp
+     */
+    public void mergeLog(List<UpdateOp> log, Timestamp peerTS) {
+        try {
+            lock.lock();
+            log.stream().filter(op -> !Timestamp.lessOrEqual(op.getTs(), replicaTS)) // Remove ops already in log
+                    .sorted((o1, o2) -> {
+                        if (Timestamp.lessOrEqual(o1.getPrev(), o2.getPrev())) return -1;
+                        if (Timestamp.lessOrEqual(o2.getPrev(), o1.getPrev())) return 1;
+                        return 0;
+                    }) // Sort by prev value
+                    .forEach(op1 -> {
+                        try {
+                            addUpdate(op1);
+                        } catch (OperationAlreadyExecutedException e) {}
+                    }); // If ops are put into ledger sorted, they will be executed respecting the partial order
+
+            replicaTS.merge(peerTS);
+            condition.signal();
+        } finally {
+            lock.unlock();
+        }
+
     }
 
     public class Read<T> {

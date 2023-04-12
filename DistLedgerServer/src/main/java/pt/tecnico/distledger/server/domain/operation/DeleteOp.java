@@ -10,6 +10,11 @@ public class DeleteOp extends UpdateOp {
         super(prev, ts, uid, account);
     }
 
+    @Override
+    public UpdateOp getCopy() {
+        return new DeleteOp(getPrev(), getTs(), getUid(), getAccount());
+    }
+
     public <T> T accept(Visitor<T> visitor) {
         return visitor.visit(this);
     }

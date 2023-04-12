@@ -10,6 +10,8 @@ public class MessageConverterVisitor implements Visitor<Operation> {
         return Operation.newBuilder()
                         .setType(OperationType.OP_CREATE_ACCOUNT)
                         .setUserId(op.getAccount())
+                .setTs(op.getTs().toGrpc())
+                .setPrev(op.getPrev().toGrpc())
                         .build();
     }
 
@@ -17,6 +19,8 @@ public class MessageConverterVisitor implements Visitor<Operation> {
         return Operation.newBuilder()
                         .setType(OperationType.OP_DELETE_ACCOUNT)
                         .setUserId(op.getAccount())
+                        .setTs(op.getTs().toGrpc())
+                        .setPrev(op.getPrev().toGrpc())
                         .build();
     }
 
@@ -26,6 +30,8 @@ public class MessageConverterVisitor implements Visitor<Operation> {
                         .setUserId(op.getAccount())
                         .setDestUserId(op.getDestAccount())
                         .setAmount(op.getAmount())
+                        .setTs(op.getTs().toGrpc())
+                        .setPrev(op.getPrev().toGrpc())
                         .build();
     }
 

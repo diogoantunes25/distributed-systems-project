@@ -38,7 +38,7 @@ public class ServerMain {
 
             ServerState state = new ServerState(target, qual);
             Server server = ServerBuilder.forPort(port)
-                    .addService(new AdminServiceImpl(state))
+                    .addService(new AdminServiceImpl(state, qual))
                     .addService(new UserServiceImpl(state, qual))
                     .addService(new CrossServerServiceImpl(state))
                     .build();

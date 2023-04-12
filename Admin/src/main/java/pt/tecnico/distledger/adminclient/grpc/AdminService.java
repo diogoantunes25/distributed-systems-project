@@ -67,6 +67,7 @@ public class AdminService extends Service {
             tryDeactivate(server);
         }
     }
+
     private void tryDeactivate(String server) throws ServerUnavailableException {
         ManagedChannel channel = getServerChannel(server);
 
@@ -112,6 +113,44 @@ public class AdminService extends Service {
             AdminDistLedger.getLedgerStateResponse response = stub.withDeadlineAfter(TIMEOUT, TimeUnit.MILLISECONDS).getLedgerState(request);
 
             ts.merge(Timestamp.fromGrpc(response.getNew()));
+
+            System.out.println("OK");
+            System.out.println(response);
+        } catch (StatusRuntimeException e) {
+            System.out.println(e.getStatus().getDescription());
+            System.err.println(e.getMessage());
+            System.out.println("");
+
+            if (e.getStatus() == Status.UNAVAILABLE) {
+                channel.shutdown();
+                throw new ServerUnavailableException(e);
+            }
+        }
+    }
+
+    public void gossip(String server) throws ServerLookupFailedException, ServerUnavailableException {
+        System.out.printf("[AdminService] request gossip from %s\n", server);
+        if (!cacheHasServerEntry(server)) cacheRefresh(server);
+
+        try {
+            tryGossip(server);
+        } catch (ServerUnavailableException e) {
+            cacheRefresh(server);
+            tryGossip(server);
+        }
+    }
+
+    private void tryGossip(String server) throws ServerUnavailableException {
+        System.out.printf("[AdminService] trying to request gossip from %s\n", server);
+        ManagedChannel channel = getServerChannel(server);
+
+        try {
+            AdminServiceGrpc.AdminServiceBlockingStub stub = AdminServiceGrpc.newBlockingStub(channel);
+            AdminDistLedger.GossipRequest request =
+                    AdminDistLedger.GossipRequest.newBuilder().build();
+
+            System.out.printf("[AdminService] sending gossip request to %s\n", server);
+            AdminDistLedger.GossipResponse response = stub.withDeadlineAfter(TIMEOUT, TimeUnit.MILLISECONDS).gossip(request);
 
             System.out.println("OK");
             System.out.println(response);

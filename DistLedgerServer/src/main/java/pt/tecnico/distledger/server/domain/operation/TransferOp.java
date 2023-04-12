@@ -35,4 +35,9 @@ public class TransferOp extends UpdateOp {
     public <T> T accept(Visitor<T> visitor) {
         return visitor.visit(this);
     }
+
+    @Override
+    public UpdateOp getCopy() {
+        return new TransferOp(getPrev(), getTs(), getUid(), getAccount(), getDestAccount(), getAmount());
+    }
 }

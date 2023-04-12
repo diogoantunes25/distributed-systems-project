@@ -32,9 +32,9 @@ public class CommandParser {
     }
 
     private void debug(String debugMessage) {
-		if (DEBUG_FLAG)
-			System.err.println(debugMessage);
-	}
+        if (DEBUG_FLAG)
+            System.err.println(debugMessage);
+    }
 
     void parseInput() {
 
@@ -133,11 +133,23 @@ public class CommandParser {
         this.adminService.getLedgerState(server);
     }
 
-    @SuppressWarnings("unused")
-    private void gossip(String line){
-        /* TODO Phase-3 */
-        System.out.println("TODO: implement gossip command (only for Phase-3)");
+    private void gossip(String line) throws ServerLookupFailedException, ServerUnavailableException {
+
+        System.out.printf("[CommandParser] gossip command found (line=%s)\n", line);
+
+        String[] split = line.split(SPACE);
+
+        if (split.length != 2){
+            this.printUsage();
+            return;
+        }
+        String server = split[1];
+
+        debug("Server: " + server);
+
+        this.adminService.gossip(server);
     }
+
     private void printUsage() {
         System.out.println("Usage:\n" +
                 "- activate <server>\n" +

@@ -7,6 +7,8 @@ import io.grpc.stub.StreamObserver;
 
 import pt.tecnico.distledger.gossip.Timestamp;
 import pt.tecnico.distledger.server.domain.UpdateId;
+import pt.tecnico.distledger.server.domain.exceptions.AccountDoesNotExistException;
+import pt.tecnico.distledger.server.domain.exceptions.DistLedgerRuntimeException;
 import pt.tecnico.distledger.server.exceptions.OperationAlreadyExecutedException;
 import pt.ulisboa.tecnico.distledger.contract.user.UserDistLedger.*;
 import pt.ulisboa.tecnico.distledger.contract.user.UserServiceGrpc;
@@ -19,6 +21,7 @@ public class UserServiceImpl extends UserServiceGrpc.UserServiceImplBase {
     private ServerState state;
     private CrossServerClient crossServerService;
 
+    final String ACCOUNT_DOES_NOT_EXIST = "Account does not exist";
     final String DELETE_UNAVAILABLE = "Delete operations are not allowed";
     final String UPDATE_ALREADY_PROCESSED = "Update with provided uid was already processed";
 
@@ -53,15 +56,20 @@ public class UserServiceImpl extends UserServiceGrpc.UserServiceImplBase {
     
     @Override
     public void balance(BalanceRequest request, StreamObserver<BalanceResponse> responseObserver) {
-        ServerState.Read<Integer> read = state.getBalance(request.getUserId(), Timestamp.fromGrpc(request.getPrev()));
+        try {
+            ServerState.Read<Integer> read = state.getBalance(request.getUserId(), Timestamp.fromGrpc(request.getPrev()));
 
-        BalanceResponse response = BalanceResponse.newBuilder()
-                .setValue(read.getValue())
-                .setNew(read.getNewTs().toGrpc())
-                .build();
+            BalanceResponse response = BalanceResponse.newBuilder()
+                    .setValue(read.getValue())
+                    .setNew(read.getNewTs().toGrpc())
+                    .build();
 
-        responseObserver.onNext(response);
-        responseObserver.onCompleted();
+            responseObserver.onNext(response);
+            responseObserver.onCompleted();
+        } catch (DistLedgerRuntimeException e) {
+            e.printStackTrace();
+            responseObserver.onError(Status.FAILED_PRECONDITION.withDescription(ACCOUNT_DOES_NOT_EXIST).asRuntimeException());
+        }
     }
 
     @Override
