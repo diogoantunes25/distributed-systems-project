@@ -128,6 +128,7 @@ public class AdminService extends Service {
         }
     }
 
+    // TODO: rethink this
     public void gossip(String server) throws ServerLookupFailedException, ServerUnavailableException {
         System.out.printf("[AdminService] request gossip from %s\n", server);
         if (!cacheHasServerEntry(server)) cacheRefresh(server);

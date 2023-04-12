@@ -101,10 +101,11 @@ public class CrossServerClient {
     }
 
     /**
-     * Tries to propagate to all replicas. Blocks until a single propagation goes thought. Throws exception if failed
-     * to gossip to everyone.
+     * Tries to propagate to all replicas. Blocks until a single propagation goes through. 
+     * Throws exception if failed to gossip to everyone.
      * @param request - request to use for propagation
      */
+    // TODO: add comments
     private void tryPropagateStateToAll(PropagateStateRequest request) throws CannotGossipException {
         System.out.printf("[CrossServerClient] trying to propagate state to all\n");
         CountDownLatch latch = new CountDownLatch(1);
