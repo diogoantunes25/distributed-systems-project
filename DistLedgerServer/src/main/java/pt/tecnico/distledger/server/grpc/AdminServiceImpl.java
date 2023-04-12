@@ -1,7 +1,6 @@
 package pt.tecnico.distledger.server.grpc;
 
 import java.util.List;
-import java.util.concurrent.locks.ReentrantLock;
 
 import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
@@ -11,7 +10,6 @@ import pt.tecnico.distledger.server.domain.exceptions.DistLedgerRuntimeException
 import pt.tecnico.distledger.server.domain.operation.UpdateOp;
 import pt.tecnico.distledger.server.exceptions.CannotGossipException;
 import pt.tecnico.distledger.server.exceptions.NoReplicasException;
-import pt.tecnico.distledger.server.visitor.Visitor;
 import pt.ulisboa.tecnico.distledger.contract.admin.AdminDistLedger.*;
 import pt.ulisboa.tecnico.distledger.contract.DistLedgerCommonDefinitions.LedgerState;
 import pt.ulisboa.tecnico.distledger.contract.admin.AdminServiceGrpc;
@@ -26,9 +24,9 @@ public class AdminServiceImpl extends AdminServiceGrpc.AdminServiceImplBase{
 
     private final static String CANNOT_GOSSIP = "Failed to find replica to gossip with";
 
-    public AdminServiceImpl(ServerState state, String qual) {
+    public AdminServiceImpl(ServerState state) {
         this.state = state;
-        this.crossServerService = new CrossServerClient(state, qual);
+        this.crossServerService = new CrossServerClient(state);
     }
 
     @Override

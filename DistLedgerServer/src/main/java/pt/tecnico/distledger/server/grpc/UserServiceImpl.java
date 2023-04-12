@@ -1,13 +1,10 @@
 package pt.tecnico.distledger.server.grpc;
 
-import java.util.concurrent.locks.ReentrantLock;
-
 import io.grpc.*;
 import io.grpc.stub.StreamObserver;
 
 import pt.tecnico.distledger.gossip.Timestamp;
 import pt.tecnico.distledger.server.domain.UpdateId;
-import pt.tecnico.distledger.server.domain.exceptions.AccountDoesNotExistException;
 import pt.tecnico.distledger.server.domain.exceptions.DistLedgerRuntimeException;
 import pt.tecnico.distledger.server.exceptions.OperationAlreadyExecutedException;
 import pt.ulisboa.tecnico.distledger.contract.user.UserDistLedger.*;
@@ -19,16 +16,14 @@ public class UserServiceImpl extends UserServiceGrpc.UserServiceImplBase {
 
     
     private ServerState state;
-    private CrossServerClient crossServerService;
 
     final String ACCOUNT_DOES_NOT_EXIST = "Account does not exist";
     final String DELETE_UNAVAILABLE = "Delete operations are not allowed";
     final String UPDATE_ALREADY_PROCESSED = "Update with provided uid was already processed";
 
 
-    public UserServiceImpl(ServerState state, String qual) {
+    public UserServiceImpl(ServerState state) {
         this.state = state;
-        this.crossServerService = new CrossServerClient(state, qual);
     }
 
     @Override

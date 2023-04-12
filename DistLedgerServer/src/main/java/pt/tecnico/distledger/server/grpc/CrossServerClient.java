@@ -15,19 +15,14 @@ import io.grpc.ManagedChannelBuilder;
 import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
 
-import pt.tecnico.distledger.gossip.Timestamp;
-import pt.tecnico.distledger.server.domain.exceptions.ServerUnavailableException;
 import pt.tecnico.distledger.server.domain.operation.UpdateOp;
-import pt.ulisboa.tecnico.distledger.contract.DistLedgerCommonDefinitions;
 import pt.ulisboa.tecnico.distledger.contract.DistLedgerCommonDefinitions.LedgerState;
-import pt.ulisboa.tecnico.distledger.contract.admin.AdminDistLedger;
 import pt.ulisboa.tecnico.distledger.contract.distledgerserver.CrossServerDistLedger.*;
 import pt.ulisboa.tecnico.distledger.contract.distledgerserver.DistLedgerCrossServerServiceGrpc;
 import pt.tecnico.distledger.namingserver.grpc.NamingServiceClient;
 import pt.tecnico.distledger.namingserver.NamingServer;
 
 import pt.tecnico.distledger.server.domain.ServerState;
-import pt.tecnico.distledger.server.domain.operation.Operation;
 import pt.tecnico.distledger.server.visitor.MessageConverterVisitor;
 import pt.tecnico.distledger.server.exceptions.NoReplicasException;
 import pt.tecnico.distledger.server.exceptions.CannotGossipException;
@@ -37,15 +32,13 @@ public class CrossServerClient {
     private static final Integer TIMEOUT = 5000; // miliseconds
 
     private ServerState state;
-    private final String qual;
 
     private Map<String, ManagedChannel> cache;
     
     private NamingServiceClient namingServiceClient = new NamingServiceClient();
 
-    public CrossServerClient(ServerState state, String qual) {
+    public CrossServerClient(ServerState state) {
         this.state = state;
-        this.qual = qual;
         this.cache = new HashMap<>();
     }
 
@@ -55,10 +48,6 @@ public class CrossServerClient {
 
     private void clearCache() {
         cache.clear();
-    }
-
-    private void removeCacheEntry(String replica) {
-        cache.remove(replica);
     }
 
     private boolean isEmptyCache() {

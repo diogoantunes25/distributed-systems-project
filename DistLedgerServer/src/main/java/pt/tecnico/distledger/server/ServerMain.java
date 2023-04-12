@@ -1,12 +1,10 @@
 package pt.tecnico.distledger.server;
 
 import java.io.IOException;
-import java.util.concurrent.locks.ReentrantLock;
 
 import io.grpc.Server;
 import io.grpc.ServerBuilder;
 
-import pt.tecnico.distledger.gossip.Timestamp;
 import pt.tecnico.distledger.namingserver.exceptions.ServerRegistrationFailedException;
 import pt.tecnico.distledger.namingserver.exceptions.ServerUnregistrationFailedException;
 import pt.tecnico.distledger.namingserver.grpc.NamingServiceClient;
@@ -36,10 +34,10 @@ public class ServerMain {
         try {
             namingServiceClient.register(NamingServer.SERVICE_NAME, qual, target);
 
-            ServerState state = new ServerState(target, qual);
+            ServerState state = new ServerState(target);
             Server server = ServerBuilder.forPort(port)
-                    .addService(new AdminServiceImpl(state, qual))
-                    .addService(new UserServiceImpl(state, qual))
+                    .addService(new AdminServiceImpl(state))
+                    .addService(new UserServiceImpl(state))
                     .addService(new CrossServerServiceImpl(state))
                     .build();
 

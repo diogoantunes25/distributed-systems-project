@@ -10,8 +10,8 @@ public class MessageConverterVisitor implements Visitor<Operation> {
         return Operation.newBuilder()
                         .setType(OperationType.OP_CREATE_ACCOUNT)
                         .setUserId(op.getAccount())
-                .setTs(op.getTs().toGrpc())
-                .setPrev(op.getPrev().toGrpc())
+                        .setTs(op.getTs().toGrpc())
+                        .setPrev(op.getPrev().toGrpc())
                         .build();
     }
 

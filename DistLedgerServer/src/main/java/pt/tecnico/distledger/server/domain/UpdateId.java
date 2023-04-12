@@ -1,7 +1,5 @@
 package pt.tecnico.distledger.server.domain;
 
-import pt.tecnico.distledger.server.domain.operation.UpdateOp;
-
 import java.util.Objects;
 
 /**

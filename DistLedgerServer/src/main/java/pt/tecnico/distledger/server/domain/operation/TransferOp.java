@@ -4,8 +4,6 @@ import pt.tecnico.distledger.gossip.Timestamp;
 import pt.tecnico.distledger.server.domain.UpdateId;
 import pt.tecnico.distledger.server.visitor.Visitor;
 
-import java.sql.Time;
-
 public class TransferOp extends UpdateOp {
     private String destAccount;
     private int amount;

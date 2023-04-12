@@ -1,6 +1,5 @@
 package pt.tecnico.distledger.server.grpc;
 
-import java.sql.Time;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -11,9 +10,6 @@ import pt.tecnico.distledger.server.domain.operation.*;
 import pt.ulisboa.tecnico.distledger.contract.distledgerserver.CrossServerDistLedger.*;
 import pt.ulisboa.tecnico.distledger.contract.distledgerserver.DistLedgerCrossServerServiceGrpc;
 
-import pt.tecnico.distledger.server.domain.exceptions.InvalidLedgerException;
-import pt.tecnico.distledger.server.domain.exceptions.ServerUnavailableException;
-import pt.tecnico.distledger.server.exceptions.OperationAlreadyExecutedException;
 import pt.tecnico.distledger.server.domain.UpdateId;
 import pt.tecnico.distledger.gossip.Timestamp;
 import pt.tecnico.distledger.server.domain.ServerState;

@@ -1,14 +1,10 @@
 package pt.tecnico.distledger.server.domain;
 
-import java.sql.Time;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
-import java.util.stream.Collectors;
 
-import com.google.rpc.context.AttributeContext;
 import pt.tecnico.distledger.gossip.Timestamp;
 import pt.tecnico.distledger.server.domain.exceptions.*;
 import pt.tecnico.distledger.server.domain.operation.*;
@@ -26,9 +22,8 @@ public class ServerState {
     private ReentrantLock lock;
     private Condition condition;
     private Thread worker;
-    private String qual;
 
-    public ServerState(String target, String qual) {
+    public ServerState(String target) {
         this.target = target;
         this.ledger = new ArrayList<>();
         this.active = new AtomicBoolean(true);
@@ -36,7 +31,6 @@ public class ServerState {
         this.condition = lock.newCondition();
         this.valueTS = new Timestamp();
         this.replicaTS = new Timestamp();
-        this.qual = qual;
 
         this.worker = new Thread(() -> {
             try {
@@ -118,7 +112,7 @@ public class ServerState {
         return accounts;
     }
 
-    public Read<List<Operation>> getLedgerState(Timestamp prev) {
+    public Read<List<UpdateOp>> getLedgerState(Timestamp prev) {
         assertIsActive();
         return read(new GetLedgerOp(prev));
     }
@@ -184,7 +178,7 @@ public class ServerState {
     private <T> Read<T> read(ReadOp op) {
         synchronized (valueTS) {
             Visitor<T> visitor = new ExecutorVisitor<>(this);
-            return new Read(op.accept(visitor), valueTS.getCopy());
+            return new Read<T>(op.accept(visitor), valueTS.getCopy());
         }
     }
 
@@ -270,9 +264,9 @@ public class ServerState {
         return accounts.get(userId).getBalance();
     }
 
-    public List<Operation> _getLedgerState() {
-        List<Operation> ledgerCopy = new ArrayList<>();
-        for (Operation op : ledger) {
+    public List<UpdateOp> _getLedgerState() {
+        List<UpdateOp> ledgerCopy = new ArrayList<>();
+        for (UpdateOp op : ledger) {
             ledgerCopy.add(op);
         }
         return ledgerCopy;
