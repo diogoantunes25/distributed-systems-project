@@ -1,13 +1,17 @@
 package pt.tecnico.distledger.server.grpc;
 
+import java.util.List;
 import java.util.concurrent.locks.ReentrantLock;
 
 import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
 
 import pt.tecnico.distledger.gossip.Timestamp;
+import pt.tecnico.distledger.server.domain.exceptions.DistLedgerRuntimeException;
+import pt.tecnico.distledger.server.domain.operation.UpdateOp;
 import pt.tecnico.distledger.server.exceptions.CannotGossipException;
 import pt.tecnico.distledger.server.exceptions.NoReplicasException;
+import pt.tecnico.distledger.server.visitor.Visitor;
 import pt.ulisboa.tecnico.distledger.contract.admin.AdminDistLedger.*;
 import pt.ulisboa.tecnico.distledger.contract.DistLedgerCommonDefinitions.LedgerState;
 import pt.ulisboa.tecnico.distledger.contract.admin.AdminServiceGrpc;
@@ -62,6 +66,24 @@ public class AdminServiceImpl extends AdminServiceGrpc.AdminServiceImplBase{
 
     @Override
     public void getLedgerState(getLedgerStateRequest request, StreamObserver<getLedgerStateResponse> responseObserver) {
-        // TODO
+        System.out.printf("[AdminServiceImpl] getLedgerState requested\n");
+        try {
+            ServerState.Read<List<UpdateOp>> read = state.getLedgerState(Timestamp.fromGrpc(request.getPrev()));
+
+            LedgerState.Builder builder = LedgerState.newBuilder();
+
+            MessageConverterVisitor visitor = new MessageConverterVisitor();
+            read.getValue().forEach(op -> builder.addLedger(op.accept(visitor)));
+
+            getLedgerStateResponse response = getLedgerStateResponse.newBuilder()
+                    .setLedgerState(builder)
+                    .setNew(read.getNewTs().toGrpc())
+                    .build();
+
+            responseObserver.onNext(response);
+            responseObserver.onCompleted();
+        } catch (DistLedgerRuntimeException e) {
+            e.printStackTrace();
+        }
     }
 }
