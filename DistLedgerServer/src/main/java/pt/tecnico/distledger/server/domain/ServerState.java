@@ -194,7 +194,6 @@ public class ServerState {
         Visitor<Void> visitor = new ExecutorVisitor<>(this);
         try {
             int ledgerSize = ledger.size();
-            Timestamp ts = getReplicaTS().getCopy();
             while (true) {
                 boolean updated = false;
                 for (int i = 0; i < ledgerSize; i++) {
@@ -227,13 +226,12 @@ public class ServerState {
                 if (updated) continue;
 
                 lock.lock();
-                while (ledgerSize == ledger.size() && ts.equals(getReplicaTS())) {
+                while (ledgerSize == ledger.size()) {
                     condition.await();
                     System.out.printf("[ServerState] await interrupted\n");
                 }
                 System.out.printf("[ServerState] conditions changed, moving on\n");
                 ledgerSize = ledger.size();
-                ts = getReplicaTS().getCopy();
                 lock.unlock();
             }
         } finally {
