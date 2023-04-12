@@ -300,11 +300,9 @@ public class ServerState {
         try {
             lock.lock();
             log.stream().filter(op -> !Timestamp.lessOrEqual(op.getTs(), replicaTS)) // Remove ops already in log
-                    .sorted((o1, o2) -> {
-                        if (Timestamp.lessOrEqual(o1.getPrev(), o2.getPrev())) return -1;
-                        if (Timestamp.lessOrEqual(o2.getPrev(), o1.getPrev())) return 1;
-                        return 0;
-                    }) // Sort by prev value
+                    .sorted(((o1, o2) ->
+                        Timestamp.getTotalOrderPrevComparator().compare(o1.getPrev(), o2.getPrev())
+                    )) // Sort by prev value
                     .forEach(op1 -> {
                         try {
                             addUpdate(op1);

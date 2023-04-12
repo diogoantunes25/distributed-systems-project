@@ -100,4 +100,40 @@ public class Timestamp {
 
         return true;
     }
+
+    public static Comparator<Timestamp> getTotalOrderPrevComparator() {
+        return (o1, o2) -> {
+            Map<String, Integer> t1 = o1.getTimes();
+            Map<String, Integer> t2 = o2.getTimes();
+
+            if (o1.equals(o2)) return 0;
+
+            // o1 < o2
+            boolean o1Smaller = true;
+            for (String target: t1.keySet())
+                if (t1.get(target) > t2.get(target)) o1Smaller = false;
+
+            if (o1Smaller) return -1;
+
+            // o2 < o1
+            boolean o2Smaller = true;
+            for (String target: t2.keySet())
+                if (t2.get(target) > t1.get(target)) o2Smaller = false;
+
+            if (o2Smaller) return 1;
+
+            // Extra comparison to establish total order
+            Set<String> targets = new HashSet<>();
+            targets.addAll(t1.keySet());
+            targets.addAll(t2.keySet());
+            targets.stream().sorted();
+
+            for (String target: targets) {
+                if (t1.get(target) > t2.get(target)) return 1;
+                if (t2.get(target) > t1.get(target)) return -1;
+            }
+
+            return 0;
+        };
+    }
 }
