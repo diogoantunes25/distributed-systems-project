@@ -84,10 +84,10 @@ public class NamingServer {
         }
 
         if (qualifier.length() == 0) {
-            return service.getServers().stream().collect(Collectors.toList());
+            return service.getServers();
         }
 
-        return services.get(serviceName).getServers(qualifier);
+        return service.getServers(qualifier);
     }
 
     public long getClientId() {

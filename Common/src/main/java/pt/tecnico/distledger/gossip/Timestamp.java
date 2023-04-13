@@ -13,16 +13,16 @@ public class Timestamp {
         this.times = times;
     }
 
-    public synchronized void updateTime(String qual, int time) {
-        times.put(qual, time);
+    public synchronized void updateTime(String target, int time) {
+        times.put(target, time);
     }
 
     public synchronized Map<String, Integer> getTimes() {
         return times;
     }
 
-    public synchronized int getTime(String qual) {
-        Integer time = times.get(qual);
+    public synchronized int getTime(String target) {
+        Integer time = times.get(target);
         return time == null ? 0 : time;
     }
 
@@ -45,8 +45,10 @@ public class Timestamp {
     public synchronized void merge(Timestamp t) {
         Map<String, Integer> newTimes = new HashMap<>();
 
-        for (String qual: times.keySet()) newTimes.put(qual, (int) Math.max(t.getTime(qual), this.getTime(qual)));
-        for (String qual: t.getTimes().keySet()) newTimes.put(qual, (int) Math.max(t.getTime(qual), this.getTime(qual)));
+        for (String target: times.keySet()) 
+            newTimes.put(target, (int) Math.max(t.getTime(target), this.getTime(target)));
+        for (String target: t.getTimes().keySet()) 
+            newTimes.put(target, (int) Math.max(t.getTime(target), this.getTime(target)));
 
         this.times = newTimes;
     }

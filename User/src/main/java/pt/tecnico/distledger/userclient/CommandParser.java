@@ -6,7 +6,6 @@ import java.util.Scanner;
 
 import pt.tecnico.distledger.namingserver.NamingServer;
 
-import pt.tecnico.distledger.client.exceptions.InvalidQualifierException;
 import pt.tecnico.distledger.client.exceptions.ServerLookupFailedException;
 import pt.tecnico.distledger.client.exceptions.ServerUnavailableException;
 import pt.tecnico.distledger.userclient.grpc.UserService;
@@ -71,8 +70,6 @@ public class CommandParser {
                         break;
                 }
 
-            } catch (InvalidQualifierException e) {
-                System.out.println(String.format("Qualifier '%s' is invalid - must be '%s' or '%s'.", e.getQual(), NamingServer.PRIMARY_QUAL, NamingServer.SECONDARY_QUAL));
             } catch (ServerUnavailableException e) {
                 System.out.println(String.format("Server is currently unavailable. For writes, you can use the other server."));
             } catch (ServerLookupFailedException e) {
@@ -86,7 +83,8 @@ public class CommandParser {
         this.userService.delete();
     }
 
-    private void createAccount(String line) throws InvalidQualifierException, ServerLookupFailedException, ServerUnavailableException {
+    private void createAccount(String line) 
+            throws ServerLookupFailedException, ServerUnavailableException {
         String[] split = line.split(SPACE);
 
         if (split.length != 3){
@@ -104,7 +102,8 @@ public class CommandParser {
         this.userService.createAccount(server, username);
     }
 
-    private void balance(String line) throws InvalidQualifierException, ServerLookupFailedException, ServerUnavailableException {
+    private void balance(String line) 
+            throws ServerLookupFailedException, ServerUnavailableException {
         String[] split = line.split(SPACE);
 
         if (split.length != 3){
@@ -120,7 +119,8 @@ public class CommandParser {
         this.userService.balance(server, username);
     }
 
-    private void transferTo(String line) throws InvalidQualifierException, ServerLookupFailedException, ServerUnavailableException {
+    private void transferTo(String line) 
+            throws ServerLookupFailedException, ServerUnavailableException {
         String[] split = line.split(SPACE);
 
         if (split.length != 5){

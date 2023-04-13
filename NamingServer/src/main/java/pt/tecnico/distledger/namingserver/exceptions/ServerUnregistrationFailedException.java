@@ -6,7 +6,7 @@ public class ServerUnregistrationFailedException extends Exception {
     private String service;
 
     public ServerUnregistrationFailedException(String server, String service, Throwable e) {
-        super(String.format("Register for service %s at %s with qualifier %s failed", service, server), e);
+        super(String.format("Unregister for service %s at %s failed", service, server), e);
         this.server = server;
         this.service = service;
     }

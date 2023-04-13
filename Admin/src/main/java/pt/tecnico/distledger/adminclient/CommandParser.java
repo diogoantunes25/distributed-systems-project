@@ -2,7 +2,6 @@ package pt.tecnico.distledger.adminclient;
 
 import pt.tecnico.distledger.namingserver.NamingServer;
 
-import pt.tecnico.distledger.client.exceptions.InvalidQualifierException;
 import pt.tecnico.distledger.client.exceptions.ServerLookupFailedException;
 import pt.tecnico.distledger.client.exceptions.ServerUnavailableException;
 import pt.tecnico.distledger.adminclient.grpc.AdminService;
@@ -91,7 +90,8 @@ public class CommandParser {
         this.adminService.delete();
     }
 
-    private void activate(String line) throws InvalidQualifierException, ServerLookupFailedException, ServerUnavailableException {
+    private void activate(String line) 
+            throws ServerLookupFailedException, ServerUnavailableException {
         String[] split = line.split(SPACE);
 
         if (split.length != 2){
@@ -105,7 +105,8 @@ public class CommandParser {
         this.adminService.activate(server);
     }
 
-    private void deactivate(String line) throws InvalidQualifierException, ServerLookupFailedException, ServerUnavailableException {
+    private void deactivate(String line) 
+            throws ServerLookupFailedException, ServerUnavailableException {
         String[] split = line.split(SPACE);
 
         if (split.length != 2){
@@ -119,7 +120,8 @@ public class CommandParser {
         this.adminService.deactivate(server);
     }
 
-    private void dump(String line) throws ServerLookupFailedException, ServerUnavailableException, InvalidQualifierException {
+    private void dump(String line) 
+            throws ServerLookupFailedException, ServerUnavailableException {
         String[] split = line.split(SPACE);
 
         if (split.length != 2){
@@ -133,7 +135,8 @@ public class CommandParser {
         this.adminService.getLedgerState(server);
     }
 
-    private void gossip(String line) throws ServerLookupFailedException, ServerUnavailableException {
+    private void gossip(String line) 
+            throws ServerLookupFailedException, ServerUnavailableException {
 
         System.out.printf("[CommandParser] gossip command found (line=%s)\n", line);
 

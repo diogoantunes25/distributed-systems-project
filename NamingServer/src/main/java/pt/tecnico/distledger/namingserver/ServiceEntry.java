@@ -27,8 +27,8 @@ public class ServiceEntry {
         this.serviceName = serviceName;
     }
 
-    public Set<ServerEntry> getServers() {
-        return servers;
+    public List<ServerEntry> getServers() {
+        return servers.stream().collect(Collectors.toList());
     }
 
     public List<ServerEntry> getServers(final String qualifier) {
