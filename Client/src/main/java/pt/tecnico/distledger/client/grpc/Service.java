@@ -19,20 +19,20 @@ public abstract class Service {
     protected final NamingServiceClient namingServiceClient = new NamingServiceClient();
     protected final long id = fetchId();
 
-    private long fetchId() {
+    public long getId() {
+        return this.id;
+    }
+    
+    protected long fetchId() {
         return this.namingServiceClient.getClientId();
     }
-
-    public long getId() {
-        return id;
-    }
-
+    
     protected boolean cacheHasServerEntry(String server) {
-        return serverCache.containsKey(server);
+        return this.serverCache.containsKey(server);
     }
 
     protected void cacheUpdate(String server, ManagedChannel channel) {
-        serverCache.put(server, channel);
+        this.serverCache.put(server, channel);
     }
 
     protected void cacheRefresh(String qual) throws ServerLookupFailedException {
@@ -45,11 +45,17 @@ public abstract class Service {
     }
 
     protected ManagedChannel getServerChannel(String server) {
-        return serverCache.get(server);
+        return this.serverCache.get(server);
+    }
+
+    protected void removeServer(String server) {
+        this.getServerChannel(server).shutdown();
+        this.serverCache.remove(server);
     }
 
     public void delete() {
-        namingServiceClient.delete();
+        for (String server : this.serverCache.keySet()) removeServer(server);
+        this.namingServiceClient.delete();
     }
 
 }

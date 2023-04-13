@@ -46,7 +46,7 @@ public class AdminService extends Service {
             System.out.println("");
 
             if (e.getStatus() == Status.UNAVAILABLE) {
-                channel.shutdown();
+                removeServer(server);
                 throw new ServerUnavailableException(e);
             }
         }
@@ -80,7 +80,7 @@ public class AdminService extends Service {
             System.out.println("");
 
             if (e.getStatus() == Status.UNAVAILABLE) {
-                channel.shutdown();
+                removeServer(server);
                 throw new ServerUnavailableException(e);
             }
         }
@@ -117,7 +117,7 @@ public class AdminService extends Service {
             System.out.println("");
 
             if (e.getStatus() == Status.UNAVAILABLE) {
-                channel.shutdown();
+                removeServer(server);
                 throw new ServerUnavailableException(e);
             }
         }
@@ -156,7 +156,7 @@ public class AdminService extends Service {
             System.out.println("");
 
             if (e.getStatus() == Status.UNAVAILABLE) {
-                channel.shutdown();
+                removeServer(server);
                 throw new ServerUnavailableException(e);
             }
         }
