@@ -47,6 +47,7 @@ public class NamingServerServiceImpl extends NamingServiceGrpc.NamingServiceImpl
         System.out.printf("[NamingServerServiceImpl] lookup request received\n");
         List<ServerEntry> servers = namingServer
             .lookup(request.getServiceName(), request.getQualifier());
+
         LookupResponse response = LookupResponse.newBuilder()
                 .addAllServices(
                     servers.stream()

@@ -17,7 +17,6 @@ import pt.tecnico.distledger.server.domain.ServerState;
 public class CrossServerServiceImpl extends DistLedgerCrossServerServiceGrpc.DistLedgerCrossServerServiceImplBase {
 
     final String INVALID_LEDGER_STATE = "Ledger State Contains Invalid Operations";
-    final String SERVER_UNAVAILABLE = "Server Is Unavailable";
 
     private ServerState state;
 
@@ -27,13 +26,13 @@ public class CrossServerServiceImpl extends DistLedgerCrossServerServiceGrpc.Dis
 
     @Override
     public void propagateState(PropagateStateRequest request, StreamObserver<PropagateStateResponse> responseStreamObserver) {
-        System.out.printf("[CrossServerServiceImple] propagateState request received\n");
-        List<UpdateOp> receveidOps = new ArrayList<>();
+        System.out.printf("[CrossServerServiceImpl] propagateState request received\n");
+        List<UpdateOp> receivedOps = new ArrayList<>();
 
         request.getLog().getLedgerList().forEach(op -> {
             switch (op.getType()) {
                 case OP_TRANSFER_TO:
-                receveidOps.add(new TransferOp(
+                receivedOps.add(new TransferOp(
                     Timestamp.fromGrpc(op.getPrev()),
                     Timestamp.fromGrpc(op.getTs()),
                     new UpdateId(op.getUpdateId()),
@@ -43,7 +42,7 @@ public class CrossServerServiceImpl extends DistLedgerCrossServerServiceGrpc.Dis
                 ));
                 break;
             case OP_CREATE_ACCOUNT:
-                receveidOps.add(new CreateOp(
+                receivedOps.add(new CreateOp(
                     Timestamp.fromGrpc(op.getPrev()),
                     Timestamp.fromGrpc(op.getTs()),
                     new UpdateId(op.getUpdateId()),
@@ -56,8 +55,8 @@ public class CrossServerServiceImpl extends DistLedgerCrossServerServiceGrpc.Dis
         });
 
 
-        System.out.printf("[CrossServerServiceImple] merging log\n");
-        state.mergeLog(receveidOps, Timestamp.fromGrpc(request.getReplicaTS()));
+        System.out.printf("[CrossServerServiceImpl] merging log of size %s\n", receivedOps.size());
+        state.mergeLog(receivedOps, Timestamp.fromGrpc(request.getReplicaTS()));
 
         responseStreamObserver.onNext(PropagateStateResponse.newBuilder().build());
         responseStreamObserver.onCompleted();

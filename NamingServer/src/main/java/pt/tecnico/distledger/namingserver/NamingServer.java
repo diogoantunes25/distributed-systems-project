@@ -75,6 +75,7 @@ public class NamingServer {
     }
 
     public List<ServerEntry> lookup(String serviceName, String qualifier) {
+        System.out.printf("[NamingServer] looking %s with qual %s\n", serviceName, qualifier);
         ServiceEntry service = services.get(serviceName);
         if (service == null) {
             return new LinkedList<ServerEntry>();

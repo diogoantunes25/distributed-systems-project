@@ -125,8 +125,9 @@ public class CrossServerClient {
             LedgerState.Builder builder = LedgerState.newBuilder();
 
             MessageConverterVisitor visitor = new MessageConverterVisitor();
+            System.out.printf("[CrossServerClient] propagating from %s (inclusive) to %s (exclusive)\n", gossiped.computeIfAbsent(target, t -> 0), ledgerState.getValue().size());
             ledgerState.getValue().subList(gossiped.computeIfAbsent(target, t -> 0), ledgerState.getValue().size())
-                    .stream().forEach(op -> op.accept(visitor));
+                    .stream().forEach(op -> builder.addLedger(op.accept(visitor)));
 
             PropagateStateRequest request = PropagateStateRequest.newBuilder()
                     .setReplicaTS(ledgerState.getNewTs().toGrpc())

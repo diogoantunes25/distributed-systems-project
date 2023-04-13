@@ -1,5 +1,6 @@
 package pt.tecnico.distledger.userclient.grpc;
 
+import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
 import io.grpc.ManagedChannel;
@@ -24,7 +25,7 @@ public class UserService extends Service {
         try {
             tryCreateAccount(server, username);
         } catch (ServerUnavailableException e) {
-            cacheRefresh();
+            cacheRefresh(server);
             tryCreateAccount(server, username);
         }
     }
@@ -55,7 +56,8 @@ public class UserService extends Service {
             System.err.println(e.getMessage());
             System.out.println("");
 
-            if (e.getStatus() == Status.UNAVAILABLE) {
+            if (Status.UNAVAILABLE.getCode() == e.getStatus().getCode()) {
+                System.out.printf("[UserService] server unavailable\n");
                 removeServer(server);
                 throw new ServerUnavailableException(e);
             }
@@ -67,7 +69,7 @@ public class UserService extends Service {
         try {
             tryGetBalance(server, username);
         } catch (ServerUnavailableException e) {
-            cacheRefresh();
+            cacheRefresh(server);
             tryGetBalance(server, username);
         }
     }
@@ -97,7 +99,7 @@ public class UserService extends Service {
             System.err.println(e.getMessage());
             System.out.println("");
             
-            if (e.getStatus() == Status.UNAVAILABLE) {
+            if (e.getStatus().getCode() == Status.UNAVAILABLE.getCode()) {
                 removeServer(server);
                 throw new ServerUnavailableException(e);
             }
@@ -109,7 +111,7 @@ public class UserService extends Service {
         try {
             tryTransferTo(server, username, dest, amount);
         } catch (ServerUnavailableException e) {
-            cacheRefresh();
+            cacheRefresh(server);
             tryTransferTo(server, username, dest, amount);
         }
     }
@@ -142,7 +144,7 @@ public class UserService extends Service {
             System.err.println(e.getMessage());
             System.out.println("");
             
-            if (e.getStatus() == Status.UNAVAILABLE) {
+            if (e.getStatus().getCode() == Status.UNAVAILABLE.getCode()) {
                 removeServer(server);
                 throw new ServerUnavailableException(e);
             }

@@ -77,7 +77,7 @@ public class CommandParser {
                 }
 
             } catch (ServerUnavailableException e) {
-                System.out.println(String.format("Server is currently unavailable. For writes, you can use the other server."));
+                System.out.println(String.format("Server is currently unavailable."));
             } catch (ServerLookupFailedException e) {
                 System.out.println(String.format("Can't find any server with provided qualifier for service '%s'", NamingServer.SERVICE_NAME));
             } catch (Exception e) {

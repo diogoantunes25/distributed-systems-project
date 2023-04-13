@@ -23,7 +23,7 @@ public class AdminService extends Service {
         try {
             tryActivate(server);
         } catch (ServerUnavailableException e) {
-            cacheRefresh();
+            cacheRefresh(server);
             tryActivate(server);
         }
     }
@@ -44,7 +44,7 @@ public class AdminService extends Service {
             System.err.println(e.getMessage());
             System.out.println("");
 
-            if (e.getStatus() == Status.UNAVAILABLE) {
+            if (e.getStatus().getCode() == Status.UNAVAILABLE.getCode()) {
                 removeServer(server);
                 throw new ServerUnavailableException(e);
             }
@@ -56,7 +56,7 @@ public class AdminService extends Service {
         try {
             tryDeactivate(server);
         } catch (ServerUnavailableException e) {
-            cacheRefresh();
+            cacheRefresh(server);
             tryDeactivate(server);
         }
     }
@@ -78,7 +78,7 @@ public class AdminService extends Service {
             System.err.println(e.getMessage());
             System.out.println("");
 
-            if (e.getStatus() == Status.UNAVAILABLE) {
+            if (e.getStatus().getCode() == Status.UNAVAILABLE.getCode()) {
                 removeServer(server);
                 throw new ServerUnavailableException(e);
             }
@@ -90,7 +90,7 @@ public class AdminService extends Service {
         try {
             tryGetLedgerState(server);
         } catch (ServerUnavailableException e) {
-            cacheRefresh();
+            cacheRefresh(server);
             tryGetLedgerState(server);
         }
     }
@@ -115,7 +115,7 @@ public class AdminService extends Service {
             System.err.println(e.getMessage());
             System.out.println("");
 
-            if (e.getStatus() == Status.UNAVAILABLE) {
+            if (e.getStatus().getCode() == Status.UNAVAILABLE.getCode()) {
                 removeServer(server);
                 throw new ServerUnavailableException(e);
             }
@@ -127,7 +127,7 @@ public class AdminService extends Service {
         try {
             tryGossip(server);
         } catch (ServerUnavailableException e) {
-            cacheRefresh();
+            cacheRefresh(server);
             tryGossip(server);
         }
     }
@@ -135,9 +135,11 @@ public class AdminService extends Service {
     private void tryGossip(String server) throws ServerUnavailableException {
         System.out.printf("[AdminService] trying to request gossip from %s\n", server);
         ManagedChannel channel = getServerChannel(server);
+        System.out.printf("[AdminService] got channel\n");
 
         try {
             AdminServiceGrpc.AdminServiceBlockingStub stub = AdminServiceGrpc.newBlockingStub(channel);
+            System.out.printf("[AdminService] got stub\n");
             AdminDistLedger.GossipRequest request =
                     AdminDistLedger.GossipRequest.newBuilder().build();
 
@@ -151,7 +153,7 @@ public class AdminService extends Service {
             System.err.println(e.getMessage());
             System.out.println("");
 
-            if (e.getStatus() == Status.UNAVAILABLE) {
+            if (e.getStatus().getCode() == Status.UNAVAILABLE.getCode()) {
                 removeServer(server);
                 throw new ServerUnavailableException(e);
             }

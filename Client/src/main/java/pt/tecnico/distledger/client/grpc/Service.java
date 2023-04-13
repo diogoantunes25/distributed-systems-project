@@ -7,6 +7,7 @@ import java.util.Map;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 
+import io.grpc.Server;
 import pt.tecnico.distledger.client.exceptions.ServerLookupFailedException;
 import pt.tecnico.distledger.client.exceptions.ServerUnavailableException;
 import pt.tecnico.distledger.namingserver.grpc.NamingServiceClient;
@@ -26,9 +27,10 @@ public abstract class Service {
 
     protected ManagedChannel getServerChannel(String server) 
             throws ServerUnavailableException {
-        return this.serverCache.get(server);
+        if (this.serverCache.containsKey(server)) return this.serverCache.get(server);
+        throw new ServerUnavailableException();
     }
-    
+
     private boolean cacheHasServerEntry(String server) {
         return this.serverCache.containsKey(server);
     }
@@ -37,28 +39,31 @@ public abstract class Service {
         return this.namingServiceClient.getClientId();
     }
 
-    protected void cacheRefresh() throws ServerLookupFailedException {
+    protected void cacheRefresh(String qualifier) throws ServerLookupFailedException {
+        System.out.printf("[Service] refreshing cache\n");
         List<String> servers = this.namingServiceClient
-            .lookup(NamingServer.SERVICE_NAME, "");
+            .lookup(NamingServer.SERVICE_NAME, qualifier);
+
         if(servers.isEmpty()) {
             throw new ServerLookupFailedException();
         }
 
-        for (String server : servers) {
-            if (!cacheHasServerEntry(server)) {
-                ManagedChannel channel = ManagedChannelBuilder
-                    .forTarget(server)
-                    .usePlaintext()
-                    .build();
-                this.serverCache.put(server, channel);
-            }
-        }
+        System.out.printf("[Service] New server %s is %s\n", qualifier, servers.get(0));
+
+        ManagedChannel channel = ManagedChannelBuilder
+            .forTarget(servers.get(0))
+            .usePlaintext()
+            .build();
+
+        this.serverCache.put(qualifier, channel);
     }
 
     protected void removeServer(String server) {
         try {
             this.getServerChannel(server).shutdown();
-        } catch (ServerUnavailableException e) { }
+        } catch (ServerUnavailableException e) {
+            System.out.printf("[Service] remove server failed\n");
+        }
         this.serverCache.remove(server);
     }
 
