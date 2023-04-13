@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.HashMap;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -37,6 +38,9 @@ public class CrossServerClient {
     
     private NamingServiceClient namingServiceClient = new NamingServiceClient();
 
+    // Saves number of log entries "gossiped" to each target
+    private Map<String, Integer> gossiped = new ConcurrentHashMap<>();
+
     public CrossServerClient(ServerState state) {
         this.state = state;
         this.cache = new HashMap<>();
@@ -48,10 +52,6 @@ public class CrossServerClient {
 
     private void clearCache() {
         cache.clear();
-    }
-
-    private boolean isEmptyCache() {
-        return cache.isEmpty();
     }
 
     private void cacheRefresh() throws NoReplicasException {
@@ -67,36 +67,26 @@ public class CrossServerClient {
     }
 
     public synchronized void propagateState() throws NoReplicasException, CannotGossipException {
-        if (isEmptyCache()) cacheRefresh();
-
-        // Get state to propagate
-        MessageConverterVisitor visitor = new MessageConverterVisitor();
         ServerState.Read<List<UpdateOp>> ledgerState = state.getLedgerCopy();
 
-        LedgerState.Builder ledgerStateBuilder = LedgerState.newBuilder();
-        ledgerState.getValue().forEach(o -> ledgerStateBuilder.addLedger(o.accept(visitor)));
-
-        PropagateStateRequest request = PropagateStateRequest.newBuilder()
-                .setReplicaTS(ledgerState.getNewTs().toGrpc())
-                .setLog(ledgerStateBuilder.build())
-                .build();
-
         try {
-            tryPropagateStateToAll(request);
+            tryPropagateStateToAll(ledgerState);
         } catch (CannotGossipException e) {
             cacheRefresh();
-            tryPropagateStateToAll(request);
+            tryPropagateStateToAll(ledgerState);
         }
     }
 
     /**
      * Tries to propagate to all replicas. Blocks until a single propagation goes through. 
      * Throws exception if failed to gossip to everyone.
-     * @param request - request to use for propagation
      */
     // TODO: add comments
-    private void tryPropagateStateToAll(PropagateStateRequest request) throws CannotGossipException {
+    private void tryPropagateStateToAll(ServerState.Read<List<UpdateOp>> ledgerState) throws CannotGossipException {
         System.out.printf("[CrossServerClient] trying to propagate state to all\n");
+
+        if (getCacheEntries().size() == 0) throw new CannotGossipException();
+
         CountDownLatch latch = new CountDownLatch(1);
         AtomicInteger running = new AtomicInteger(getCacheEntries().size());
         AtomicBoolean success = new AtomicBoolean(false);
@@ -104,7 +94,7 @@ public class CrossServerClient {
         for (Map.Entry<String, ManagedChannel> entry : getCacheEntries()){
             new Thread(() -> {
                 try {
-                    tryPropagateStateToSingle(entry.getValue(), request);
+                    tryPropagateStateToSingle(entry.getKey(), ledgerState);
                     System.out.printf("[CrossServerClient] propagation to %s succeeded\n", entry.getKey());
                     success.set(true);
                     latch.countDown();
@@ -128,10 +118,24 @@ public class CrossServerClient {
         if (!success.get()) throw new CannotGossipException();
     }
 
-    private void tryPropagateStateToSingle(ManagedChannel channel, PropagateStateRequest request) throws CannotGossipException {
+    private void tryPropagateStateToSingle(String target, ServerState.Read<List<UpdateOp>> ledgerState) throws CannotGossipException {
+        ManagedChannel channel = cache.get(target);
         DistLedgerCrossServerServiceGrpc.DistLedgerCrossServerServiceBlockingStub stub = DistLedgerCrossServerServiceGrpc.newBlockingStub(channel);
         try {
+            LedgerState.Builder builder = LedgerState.newBuilder();
+
+            MessageConverterVisitor visitor = new MessageConverterVisitor();
+            ledgerState.getValue().subList(gossiped.computeIfAbsent(target, t -> 0), ledgerState.getValue().size())
+                    .stream().forEach(op -> op.accept(visitor));
+
+            PropagateStateRequest request = PropagateStateRequest.newBuilder()
+                    .setReplicaTS(ledgerState.getNewTs().toGrpc())
+                    .setLog(builder)
+                    .build();
+
             stub.withDeadlineAfter(TIMEOUT, TimeUnit.MILLISECONDS).propagateState(request);
+            gossiped.put(target, ledgerState.getValue().size());
+
         } catch (StatusRuntimeException e) {
             System.out.println(e.getStatus().getDescription());
             System.err.println(e.getMessage());

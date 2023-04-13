@@ -307,7 +307,7 @@ public class ServerState {
                         try {
                             addUpdate(op1);
                         } catch (OperationAlreadyExecutedException e) {}
-                    }); // If ops are put into ledger sorted, they will be executed respecting the partial order
+                    }); // If ops are put consecutively into ledger sorted, they will be executed respecting the partial order
 
             replicaTS.merge(peerTS);
             condition.signal();
