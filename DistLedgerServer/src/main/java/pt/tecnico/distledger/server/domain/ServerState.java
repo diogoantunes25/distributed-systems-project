@@ -15,6 +15,7 @@ import pt.tecnico.distledger.server.visitor.Visitor;
 public class ServerState {
     volatile private String target;
     volatile private List<UpdateOp> ledger;
+    volatile private int minStable;
     volatile private AtomicBoolean active;
     volatile private Map<String, Account> accounts;
     volatile private Timestamp replicaTS;
@@ -25,13 +26,18 @@ public class ServerState {
 
     public ServerState(String target) {
         this.target = target;
-        this.ledger = new ArrayList<>();
         this.active = new AtomicBoolean(true);
-        this.lock = new ReentrantLock();
-        this.condition = lock.newCondition();
         this.valueTS = new Timestamp();
         this.replicaTS = new Timestamp();
+        
+        this.ledger = new ArrayList<>();
+        this.minStable = 0;
 
+        // Lock for the ledger
+        this.lock = new ReentrantLock();
+        this.condition = lock.newCondition();
+
+        // Single thread looping over the updates, trying to execute them
         this.worker = new Thread(() -> {
             try {
                 tryProgress();
@@ -170,18 +176,22 @@ public class ServerState {
             int ledgerSize = ledger.size();
             while (true) {
                 boolean updated = false;
-                for (int i = 0; i < ledgerSize; i++) {
+                for (int i = minStable; i < ledgerSize; i++) {
                     UpdateOp op = ledger.get(i);
+
+                    // Check if op was already stable
                     if (op.isStable()) {
                         System.out.printf("[ServerState] update %s was already stable, skipping\n", op.getUid().getUid());
                         continue;
                     }
 
+                    // Check if op is still not stable
                     if (!isStable(op.getPrev())) {
                         System.out.printf("[ServerState] update %s is not stable, skipping\n", op.getUid().getUid());
                         continue;
                     }
 
+                    // op has recently turned stable, execute it
                     System.out.printf("[ServerState] Update %s is now stable, running.\n", op.getUid().getUid());
                     op.setStable();
 
@@ -193,6 +203,7 @@ public class ServerState {
                         } finally {
                             this.valueTS.merge(op.getTs());
                             updated = true;
+                            if (i == minStable) minStable++;
                         }
                     }
                 }
@@ -246,7 +257,8 @@ public class ServerState {
     }
 
     private boolean executed(UpdateOp op) {
-        for (UpdateOp operation: ledger) if (operation.getUid().equals(op)) return true;
+        for (UpdateOp operation: ledger) 
+            if (operation.getUid().equals(op.getUid())) return true;
         return false;
     }
 
