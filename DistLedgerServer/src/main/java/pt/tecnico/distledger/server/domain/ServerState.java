@@ -83,9 +83,6 @@ public class ServerState {
         return ts;
     }
 
-    public void deleteAccount(UpdateId updateId, String account, Timestamp prev)
-            throws ServerUnavailableException {}
-
     public Timestamp transferTo(UpdateId updateId, String accountFrom, String accountTo, int amount, Timestamp prev)
             throws ServerUnavailableException, OperationAlreadyExecutedException {
         assertIsActive();
@@ -130,23 +127,6 @@ public class ServerState {
 
         if (accounts.containsKey(userId)) {
             throw new AccountAlreadyExistsException(userId);
-        }
-    }
-
-    public void assertCanDeleteAccount(String userId) throws AccountDoesNotExistException, BalanceNotZeroException,
-            BrokerCannotBeDeletedException {
-
-        if (!accounts.containsKey(userId)) {
-            throw new AccountDoesNotExistException(userId);
-        }
-
-        if (userId == Account.BROKER_ID) {
-            throw new BrokerCannotBeDeletedException();
-        }
-
-        Account user = accounts.get(userId);
-        if (user.getBalance() != 0) {
-            throw new BalanceNotZeroException(userId, user.getBalance());
         }
     }
 
@@ -239,13 +219,6 @@ public class ServerState {
         assertCanCreateAccount(userId);
         accounts.put(userId, new Account(userId));
         System.out.printf("[ServerState] Created account with id %s\n", userId);
-    }
-
-    public void _deleteAccount(String userId)
-            throws AccountDoesNotExistException, BalanceNotZeroException,
-            ServerUnavailableException, BrokerCannotBeDeletedException {
-        assertCanDeleteAccount(userId);
-        accounts.remove(userId);
     }
 
     public void _transferTo(String accountFrom, String accountTo, int amount)

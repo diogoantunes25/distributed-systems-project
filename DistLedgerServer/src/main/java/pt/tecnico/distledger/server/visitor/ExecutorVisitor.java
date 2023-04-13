@@ -24,17 +24,6 @@ public class ExecutorVisitor<T> implements Visitor<T>{
     }
 
     @Override
-    public T visit(DeleteOp op) {
-        try {
-            state._deleteAccount(op.getAccount());
-        } catch (AccountDoesNotExistException | BalanceNotZeroException | BrokerCannotBeDeletedException e) {
-            throw new InvalidLedgerException(state, e);
-        }
-
-        return null;
-    }
-
-    @Override
     public T visit(TransferOp op) {
         try {
             state._transferTo(op.getAccount(), op.getDestAccount(), op.getAmount());

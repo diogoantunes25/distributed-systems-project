@@ -61,11 +61,6 @@ public class UserService extends Service {
         }
     }
 
-    
-    public void deleteAccount(String server, String username) {
-        // Do nothing (delete not provided in gossip)
-    }
-    
     public void balance(String server, String username) throws ServerUnavailableException, ServerLookupFailedException {
         if (!cacheHasServerEntry(server)) cacheRefresh(server);
         

@@ -15,15 +15,6 @@ public class MessageConverterVisitor implements Visitor<Operation> {
                         .build();
     }
 
-    public Operation visit(DeleteOp op) {
-        return Operation.newBuilder()
-                        .setType(OperationType.OP_DELETE_ACCOUNT)
-                        .setUserId(op.getAccount())
-                        .setTs(op.getTs().toGrpc())
-                        .setPrev(op.getPrev().toGrpc())
-                        .build();
-    }
-
     public Operation visit(TransferOp op) {
         return Operation.newBuilder()
                         .setType(OperationType.OP_TRANSFER_TO)

@@ -18,7 +18,6 @@ public class UserServiceImpl extends UserServiceGrpc.UserServiceImplBase {
     private ServerState state;
 
     final String ACCOUNT_DOES_NOT_EXIST = "Account does not exist";
-    final String DELETE_UNAVAILABLE = "Delete operations are not allowed";
     final String UPDATE_ALREADY_PROCESSED = "Update with provided uid was already processed";
 
 
@@ -42,11 +41,6 @@ public class UserServiceImpl extends UserServiceGrpc.UserServiceImplBase {
             e.printStackTrace();
             responseObserver.onError(Status.CANCELLED.withDescription(UPDATE_ALREADY_PROCESSED).asRuntimeException());
         }
-    }
-
-    @Override
-    public void deleteAccount(DeleteAccountRequest request, StreamObserver<DeleteAccountResponse> responseObserver) {
-        responseObserver.onError(Status.UNAVAILABLE.withDescription(DELETE_UNAVAILABLE).asRuntimeException());
     }
     
     @Override

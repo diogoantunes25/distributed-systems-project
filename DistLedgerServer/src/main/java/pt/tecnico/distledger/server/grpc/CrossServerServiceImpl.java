@@ -50,14 +50,6 @@ public class CrossServerServiceImpl extends DistLedgerCrossServerServiceGrpc.Dis
                     op.getUserId()
                 ));
                 break;
-            case OP_DELETE_ACCOUNT:
-                receveidOps.add(new DeleteOp(
-                    Timestamp.fromGrpc(op.getPrev()),
-                    Timestamp.fromGrpc(op.getTs()),
-                    new UpdateId(op.getUpdateId()),
-                    op.getUserId()
-                ));
-                break;
             default:
                 responseStreamObserver.onError(Status.INVALID_ARGUMENT.withDescription(INVALID_LEDGER_STATE).asRuntimeException());
             }

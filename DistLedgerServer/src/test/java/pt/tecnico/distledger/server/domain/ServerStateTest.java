@@ -13,8 +13,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.BeforeEach;
 
 import pt.tecnico.distledger.server.domain.exceptions.AccountDoesNotExistException;
-import pt.tecnico.distledger.server.domain.exceptions.BalanceNotZeroException;
-import pt.tecnico.distledger.server.domain.exceptions.BrokerCannotBeDeletedException;
 import pt.tecnico.distledger.server.domain.exceptions.DistLedgerException;
 import pt.tecnico.distledger.server.domain.exceptions.NotEnoughBalanceException;
 import pt.tecnico.distledger.server.domain.exceptions.ServerUnavailableException;
