@@ -47,7 +47,10 @@ public class NamingServiceClient {
             .setServiceName(serviceName)
             .setQualifier(serverQualifier)
             .build();
-        LookupResponse response = stub.withDeadlineAfter(TIMEOUT, TimeUnit.MILLISECONDS).lookup(request);
+            
+        LookupResponse response = stub
+            .withDeadlineAfter(TIMEOUT, TimeUnit.MILLISECONDS)
+            .lookup(request);
 
         return response.getServicesList();
     }
@@ -69,7 +72,11 @@ public class NamingServiceClient {
 
     public long getClientId() {
         GetClientIdRequest request = GetClientIdRequest.newBuilder().build();
-        GetClientIdResponse response = stub.withDeadlineAfter(TIMEOUT, TimeUnit.MILLISECONDS).getClientId(request);
+
+        GetClientIdResponse response = stub
+            .withDeadlineAfter(TIMEOUT, TimeUnit.MILLISECONDS)
+            .getClientId(request);
+
         return response.getClientId();
     }
 

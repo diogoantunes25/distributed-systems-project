@@ -17,8 +17,6 @@ import pt.tecnico.distledger.namingserver.grpc.NamingServerServiceImpl;
 public class NamingServer {
 
     public final static String SERVICE_NAME = "DistLedger";
-    public final static String PRIMARY_QUAL = "A";
-    public final static String SECONDARY_QUAL = "B";
 
     private Map<String, ServiceEntry> services = new HashMap<String, ServiceEntry>();
     private AtomicLong clientId = new AtomicLong(0);

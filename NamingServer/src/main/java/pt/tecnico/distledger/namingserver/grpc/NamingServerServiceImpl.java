@@ -36,14 +36,17 @@ public class NamingServerServiceImpl extends NamingServiceGrpc.NamingServiceImpl
             responseObserver.onNext(RegisterResponse.newBuilder().build());
             responseObserver.onCompleted();
         } catch (CannotRegisterException e) {
-            responseObserver.onError(Status.ALREADY_EXISTS.withDescription(NOT_POSSIBLE_TO_REGISTER).asRuntimeException());
+            responseObserver.onError(Status.ALREADY_EXISTS
+                .withDescription(NOT_POSSIBLE_TO_REGISTER)
+                .asRuntimeException());
         }
     }
 
     @Override
     public void lookup(LookupRequest request, StreamObserver<LookupResponse> responseObserver) {
         System.out.printf("[NamingServerServiceImpl] lookup request received\n");
-        List<ServerEntry> servers = namingServer.lookup(request.getServiceName(), request.getQualifier());
+        List<ServerEntry> servers = namingServer
+            .lookup(request.getServiceName(), request.getQualifier());
         LookupResponse response = LookupResponse.newBuilder()
                 .addAllServices(
                     servers.stream()
@@ -67,7 +70,9 @@ public class NamingServerServiceImpl extends NamingServiceGrpc.NamingServiceImpl
             responseObserver.onNext(RemoveResponse.newBuilder().build());
             responseObserver.onCompleted();
         } catch (CannotRemoveException e) {
-            responseObserver.onError(Status.NOT_FOUND.withDescription(NOT_POSSIBLE_TO_REMOVE).asRuntimeException());
+            responseObserver.onError(Status.NOT_FOUND
+                .withDescription(NOT_POSSIBLE_TO_REMOVE)
+                .asRuntimeException());
         }
     }
 
