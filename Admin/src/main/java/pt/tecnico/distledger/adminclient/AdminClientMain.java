@@ -31,6 +31,7 @@ public class AdminClientMain {
             } else {
                 System.err.println("Incorrect usage!");
                 System.err.println("Usage: mvn exec:java [-Dexec.args=-Ddebug]");
+                return;
             }
         }
 
