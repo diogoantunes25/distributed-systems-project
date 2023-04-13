@@ -18,13 +18,12 @@ public class AdminService extends Service {
 
     private Timestamp ts = new Timestamp();
 
-    public void activate(String server) throws ServerUnavailableException, ServerLookupFailedException {
-        if (!cacheHasServerEntry(server)) cacheRefresh(server);
-
+    public void activate(String server) 
+            throws ServerUnavailableException, ServerLookupFailedException {
         try {
             tryActivate(server);
         } catch (ServerUnavailableException e) {
-            cacheRefresh(server);
+            cacheRefresh();
             tryActivate(server);
         }
     }
@@ -52,18 +51,18 @@ public class AdminService extends Service {
         }
     }
 
-    public void deactivate(String server) throws ServerUnavailableException, ServerLookupFailedException {
-        if (!cacheHasServerEntry(server)) cacheRefresh(server);
-
+    public void deactivate(String server) 
+            throws ServerUnavailableException, ServerLookupFailedException {
         try {
             tryDeactivate(server);
         } catch (ServerUnavailableException e) {
-            cacheRefresh(server);
+            cacheRefresh();
             tryDeactivate(server);
         }
     }
 
-    private void tryDeactivate(String server) throws ServerUnavailableException {
+    private void tryDeactivate(String server) 
+            throws ServerUnavailableException {
         ManagedChannel channel = getServerChannel(server);
 
         try {
@@ -86,18 +85,18 @@ public class AdminService extends Service {
         }
     }
 
-    public void getLedgerState(String server) throws ServerLookupFailedException, ServerUnavailableException {
-        if (!cacheHasServerEntry(server)) cacheRefresh(server);
-
+    public void getLedgerState(String server) 
+            throws ServerLookupFailedException, ServerUnavailableException {
         try {
             tryGetLedgerState(server);
         } catch (ServerUnavailableException e) {
-            cacheRefresh(server);
+            cacheRefresh();
             tryGetLedgerState(server);
         }
     }
 
-    private void tryGetLedgerState(String server) throws ServerUnavailableException {
+    private void tryGetLedgerState(String server) 
+            throws ServerUnavailableException {
         ManagedChannel channel = getServerChannel(server);
 
         try{
@@ -123,15 +122,12 @@ public class AdminService extends Service {
         }
     }
 
-    // TODO: rethink this
     public void gossip(String server) throws ServerLookupFailedException, ServerUnavailableException {
         System.out.printf("[AdminService] request gossip from %s\n", server);
-        if (!cacheHasServerEntry(server)) cacheRefresh(server);
-
         try {
             tryGossip(server);
         } catch (ServerUnavailableException e) {
-            cacheRefresh(server);
+            cacheRefresh();
             tryGossip(server);
         }
     }

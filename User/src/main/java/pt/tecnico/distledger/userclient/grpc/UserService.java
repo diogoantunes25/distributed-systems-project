@@ -21,30 +21,31 @@ public class UserService extends Service {
 
     public void createAccount(String server, String username)
             throws ServerLookupFailedException, ServerUnavailableException {
-        if (!cacheHasServerEntry(server)) cacheRefresh(server);
-
         try {
             tryCreateAccount(server, username);
         } catch (ServerUnavailableException e) {
-            cacheRefresh(server);
+            cacheRefresh();
             tryCreateAccount(server, username);
         }
     }
 
-    private void tryCreateAccount(String server, String username) throws ServerUnavailableException {
+    private void tryCreateAccount(String server, String username) 
+            throws ServerUnavailableException {
         ManagedChannel channel = getServerChannel(server);
 
         try{
-            UserServiceGrpc.UserServiceBlockingStub stub = UserServiceGrpc.newBlockingStub(channel);
+            UserServiceGrpc.UserServiceBlockingStub stub = UserServiceGrpc
+                .newBlockingStub(channel);
             
             CreateAccountRequest request = CreateAccountRequest.newBuilder()
-                                                                .setUserId(username)
-                                                                .setPrev(ts.toGrpc())
-                                                                .setUpdateId(getId() + "-" + requestID++)
-                                                                .build();
-
+                                                               .setUserId(username)
+                                                               .setPrev(ts.toGrpc())
+                                                               .setUpdateId(getId() + "-" + requestID++)
+                                                               .build();
             
-            CreateAccountResponse response = stub.withDeadlineAfter(TIMEOUT, TimeUnit.MILLISECONDS).createAccount(request);
+            CreateAccountResponse response = stub
+                .withDeadlineAfter(TIMEOUT, TimeUnit.MILLISECONDS)
+                .createAccount(request);
             ts.merge(Timestamp.fromGrpc(response.getTs()));
             
             System.out.println("OK");
@@ -61,29 +62,32 @@ public class UserService extends Service {
         }
     }
 
-    public void balance(String server, String username) throws ServerUnavailableException, ServerLookupFailedException {
-        if (!cacheHasServerEntry(server)) cacheRefresh(server);
-        
+    public void balance(String server, String username) 
+            throws ServerUnavailableException, ServerLookupFailedException {
         try {
             tryGetBalance(server, username);
         } catch (ServerUnavailableException e) {
-            cacheRefresh(server);
+            cacheRefresh();
             tryGetBalance(server, username);
         }
     }
     
-    private void tryGetBalance(String server, String username) throws ServerUnavailableException {
+    private void tryGetBalance(String server, String username) 
+            throws ServerUnavailableException {
         ManagedChannel channel = getServerChannel(server);
         
         try{
-            UserServiceGrpc.UserServiceBlockingStub stub = UserServiceGrpc.newBlockingStub(channel);
+            UserServiceGrpc.UserServiceBlockingStub stub = UserServiceGrpc
+                .newBlockingStub(channel);
             
             BalanceRequest request = BalanceRequest.newBuilder()
-                                                    .setUserId(username)
-                                                    .setPrev(ts.toGrpc())
-                                                    .build();
+                                                   .setUserId(username)
+                                                   .setPrev(ts.toGrpc())
+                                                   .build();
 
-            BalanceResponse response = stub.withDeadlineAfter(TIMEOUT, TimeUnit.MILLISECONDS).balance(request);
+            BalanceResponse response = stub
+                .withDeadlineAfter(TIMEOUT, TimeUnit.MILLISECONDS)
+                .balance(request);
             ts.merge(Timestamp.fromGrpc(response.getNew()));
 
             System.out.println("OK");
@@ -101,34 +105,34 @@ public class UserService extends Service {
     }
     
     public void transferTo(String server, String username, String dest, Integer amount) 
-    throws ServerLookupFailedException, ServerUnavailableException {
-        if (!cacheHasServerEntry(server)) cacheRefresh(server);
-        
+            throws ServerLookupFailedException, ServerUnavailableException {
         try {
             tryTransferTo(server, username, dest, amount);
         } catch (ServerUnavailableException e) {
-            cacheRefresh(server);
+            cacheRefresh();
             tryTransferTo(server, username, dest, amount);
         }
     }
-    
 
     private void tryTransferTo(String server, String username, String dest, Integer amount) 
-    throws ServerUnavailableException {
+            throws ServerUnavailableException {
         ManagedChannel channel = getServerChannel(server);
         
         try{
-            UserServiceGrpc.UserServiceBlockingStub stub = UserServiceGrpc.newBlockingStub(channel);
+            UserServiceGrpc.UserServiceBlockingStub stub = UserServiceGrpc
+                .newBlockingStub(channel);
             
             TransferToRequest request = TransferToRequest.newBuilder()
-                                                            .setAccountFrom(username)
-                                                            .setAccountTo(dest)
-                                                            .setAmount(amount)
-                                                            .setPrev(ts.toGrpc())
-                                                            .setUpdateId(getId() + "-" + requestID++)
-                                                            .build();
+                                                         .setAccountFrom(username)
+                                                         .setAccountTo(dest)
+                                                         .setAmount(amount)
+                                                         .setPrev(ts.toGrpc())
+                                                         .setUpdateId(getId() + "-" + requestID++)
+                                                         .build();
 
-            TransferToResponse response = stub.withDeadlineAfter(TIMEOUT, TimeUnit.MILLISECONDS).transferTo(request);
+            TransferToResponse response = stub
+                .withDeadlineAfter(TIMEOUT, TimeUnit.MILLISECONDS)
+                .transferTo(request);
             ts.merge(Timestamp.fromGrpc(response.getTs()));
 
             System.out.println("OK");

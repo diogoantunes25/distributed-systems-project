@@ -8,6 +8,7 @@ import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 
 import pt.tecnico.distledger.client.exceptions.ServerLookupFailedException;
+import pt.tecnico.distledger.client.exceptions.ServerUnavailableException;
 import pt.tecnico.distledger.namingserver.grpc.NamingServiceClient;
 import pt.tecnico.distledger.namingserver.NamingServer;
 
@@ -22,34 +23,42 @@ public abstract class Service {
     public long getId() {
         return this.id;
     }
-    
-    protected long fetchId() {
-        return this.namingServiceClient.getClientId();
+
+    protected ManagedChannel getServerChannel(String server) 
+            throws ServerUnavailableException {
+        return this.serverCache.get(server);
     }
     
-    protected boolean cacheHasServerEntry(String server) {
+    private boolean cacheHasServerEntry(String server) {
         return this.serverCache.containsKey(server);
     }
-
-    protected void cacheUpdate(String server, ManagedChannel channel) {
-        this.serverCache.put(server, channel);
+    
+    private long fetchId() {
+        return this.namingServiceClient.getClientId();
     }
 
-    protected void cacheRefresh(String qual) throws ServerLookupFailedException {
-        List<String> servers = this.namingServiceClient.lookup(NamingServer.SERVICE_NAME, qual);
+    protected void cacheRefresh() throws ServerLookupFailedException {
+        List<String> servers = this.namingServiceClient
+            .lookup(NamingServer.SERVICE_NAME, "");
         if(servers.isEmpty()) {
-            throw new ServerLookupFailedException(qual);
+            throw new ServerLookupFailedException();
         }
 
-        cacheUpdate(qual, ManagedChannelBuilder.forTarget(servers.get(0)).usePlaintext().build());
-    }
-
-    protected ManagedChannel getServerChannel(String server) {
-        return this.serverCache.get(server);
+        for (String server : servers) {
+            if (!cacheHasServerEntry(server)) {
+                ManagedChannel channel = ManagedChannelBuilder
+                    .forTarget(server)
+                    .usePlaintext()
+                    .build();
+                this.serverCache.put(server, channel);
+            }
+        }
     }
 
     protected void removeServer(String server) {
-        this.getServerChannel(server).shutdown();
+        try {
+            this.getServerChannel(server).shutdown();
+        } catch (ServerUnavailableException e) { }
         this.serverCache.remove(server);
     }
 
