@@ -45,7 +45,7 @@ public class UserService extends Service {
                                                                .build();
             
             CreateAccountResponse response = stub
-                .withDeadlineAfter(TIMEOUT, TimeUnit.MILLISECONDS)
+                .withDeadlineAfter(SHORT_TIMEOUT, TimeUnit.MILLISECONDS)
                 .createAccount(request);
             ts.merge(Timestamp.fromGrpc(response.getTs()));
             
@@ -87,8 +87,9 @@ public class UserService extends Service {
                                                    .setPrev(ts.toGrpc())
                                                    .build();
 
+            // long timeout is needed because read operations block until stable
             BalanceResponse response = stub
-                .withDeadlineAfter(TIMEOUT, TimeUnit.MILLISECONDS)
+                .withDeadlineAfter(LONG_TIMEOUT, TimeUnit.MILLISECONDS)
                 .balance(request);
             ts.merge(Timestamp.fromGrpc(response.getNew()));
 
@@ -133,7 +134,7 @@ public class UserService extends Service {
                                                          .build();
 
             TransferToResponse response = stub
-                .withDeadlineAfter(TIMEOUT, TimeUnit.MILLISECONDS)
+                .withDeadlineAfter(SHORT_TIMEOUT, TimeUnit.MILLISECONDS)
                 .transferTo(request);
             ts.merge(Timestamp.fromGrpc(response.getTs()));
 

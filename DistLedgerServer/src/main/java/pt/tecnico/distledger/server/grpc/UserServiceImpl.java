@@ -28,8 +28,11 @@ public class UserServiceImpl extends UserServiceGrpc.UserServiceImplBase {
     @Override
     public void createAccount(CreateAccountRequest request, StreamObserver<CreateAccountResponse> responseObserver) {
         try {
-            Timestamp newTS = state.createAccount(new UpdateId(request.getUpdateId()), request.getUserId(),
-                    Timestamp.fromGrpc(request.getPrev()));
+            Timestamp newTS = state.createAccount(
+                new UpdateId(request.getUpdateId()), 
+                request.getUserId(),
+                Timestamp.fromGrpc(request.getPrev())
+            );
 
             CreateAccountResponse response = CreateAccountResponse.newBuilder()
                     .setTs(newTS.toGrpc())
@@ -46,7 +49,10 @@ public class UserServiceImpl extends UserServiceGrpc.UserServiceImplBase {
     @Override
     public void balance(BalanceRequest request, StreamObserver<BalanceResponse> responseObserver) {
         try {
-            ServerState.Read<Integer> read = state.getBalance(request.getUserId(), Timestamp.fromGrpc(request.getPrev()));
+            ServerState.Read<Integer> read = state.getBalance(
+                request.getUserId(), 
+                Timestamp.fromGrpc(request.getPrev())
+            );
 
             BalanceResponse response = BalanceResponse.newBuilder()
                     .setValue(read.getValue())
@@ -64,8 +70,13 @@ public class UserServiceImpl extends UserServiceGrpc.UserServiceImplBase {
     @Override
     public void transferTo(TransferToRequest request, StreamObserver<TransferToResponse> responseObserver) {
         try {
-            Timestamp newTS = state.transferTo(new UpdateId(request.getUpdateId()), request.getAccountFrom(),
-                    request.getAccountTo(), request.getAmount(), Timestamp.fromGrpc(request.getPrev()));
+            Timestamp newTS = state.transferTo(
+                new UpdateId(request.getUpdateId()), 
+                request.getAccountFrom(),
+                request.getAccountTo(), 
+                request.getAmount(), 
+                Timestamp.fromGrpc(request.getPrev())
+            );
 
             TransferToResponse response = TransferToResponse.newBuilder()
                     .setTs(newTS.toGrpc())

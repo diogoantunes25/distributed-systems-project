@@ -32,10 +32,13 @@ public class AdminService extends Service {
         ManagedChannel channel = getServerChannel(server);
 
         try{
-            AdminServiceGrpc.AdminServiceBlockingStub stub = AdminServiceGrpc.newBlockingStub(channel);
+            AdminServiceGrpc.AdminServiceBlockingStub stub = AdminServiceGrpc
+                .newBlockingStub(channel);
             AdminDistLedger.ActivateRequest request = 
                 AdminDistLedger.ActivateRequest.newBuilder().build();
-            AdminDistLedger.ActivateResponse response = stub.withDeadlineAfter(TIMEOUT, TimeUnit.MILLISECONDS).activate(request);
+            AdminDistLedger.ActivateResponse response = stub
+                .withDeadlineAfter(SHORT_TIMEOUT, TimeUnit.MILLISECONDS)
+                .activate(request);
 
             System.out.println("OK");
             System.out.println(response);
@@ -66,10 +69,13 @@ public class AdminService extends Service {
         ManagedChannel channel = getServerChannel(server);
 
         try {
-            AdminServiceGrpc.AdminServiceBlockingStub stub = AdminServiceGrpc.newBlockingStub(channel);
+            AdminServiceGrpc.AdminServiceBlockingStub stub = AdminServiceGrpc
+                .newBlockingStub(channel);
             AdminDistLedger.DeactivateRequest request =
                 AdminDistLedger.DeactivateRequest.newBuilder().build();
-            AdminDistLedger.DeactivateResponse response = stub.withDeadlineAfter(TIMEOUT, TimeUnit.MILLISECONDS).deactivate(request);
+            AdminDistLedger.DeactivateResponse response = stub
+                .withDeadlineAfter(SHORT_TIMEOUT, TimeUnit.MILLISECONDS)
+                .deactivate(request);
 
             System.out.println("OK");
             System.out.println(response);
@@ -100,11 +106,15 @@ public class AdminService extends Service {
         ManagedChannel channel = getServerChannel(server);
 
         try{
-            AdminServiceGrpc.AdminServiceBlockingStub stub = AdminServiceGrpc.newBlockingStub(channel);
+            AdminServiceGrpc.AdminServiceBlockingStub stub = AdminServiceGrpc
+                .newBlockingStub(channel);
             AdminDistLedger.getLedgerStateRequest request =
                 AdminDistLedger.getLedgerStateRequest.newBuilder().setPrev(ts.toGrpc()).build();
             
-            AdminDistLedger.getLedgerStateResponse response = stub.withDeadlineAfter(TIMEOUT, TimeUnit.MILLISECONDS).getLedgerState(request);
+            // long timeout is needed because read operations block until stable
+            AdminDistLedger.getLedgerStateResponse response = stub
+                .withDeadlineAfter(LONG_TIMEOUT, TimeUnit.MILLISECONDS)
+                .getLedgerState(request);
 
             ts.merge(Timestamp.fromGrpc(response.getNew()));
 
@@ -138,13 +148,16 @@ public class AdminService extends Service {
         System.out.printf("[AdminService] got channel\n");
 
         try {
-            AdminServiceGrpc.AdminServiceBlockingStub stub = AdminServiceGrpc.newBlockingStub(channel);
+            AdminServiceGrpc.AdminServiceBlockingStub stub = AdminServiceGrpc
+                .newBlockingStub(channel);
             System.out.printf("[AdminService] got stub\n");
             AdminDistLedger.GossipRequest request =
                     AdminDistLedger.GossipRequest.newBuilder().build();
 
             System.out.printf("[AdminService] sending gossip request to %s\n", server);
-            AdminDistLedger.GossipResponse response = stub.withDeadlineAfter(TIMEOUT, TimeUnit.MILLISECONDS).gossip(request);
+            AdminDistLedger.GossipResponse response = stub
+                .withDeadlineAfter(SHORT_TIMEOUT, TimeUnit.MILLISECONDS)
+                .gossip(request);
 
             System.out.println("OK");
             System.out.println(response);

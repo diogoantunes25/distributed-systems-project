@@ -15,7 +15,7 @@ import pt.ulisboa.tecnico.distledger.contract.distledgerserver.NamingServiceGrpc
 
 public class NamingServiceClient {
     private static final String NAMING_SERVER_TARGET = "localhost:5001";
-    private static final int TIMEOUT = 5000;
+    private static final int SHORT_TIMEOUT = 5000; // 5 seconds
     
     final ManagedChannel channel;
     final NamingServiceGrpc.NamingServiceBlockingStub stub;
@@ -35,7 +35,7 @@ public class NamingServiceClient {
                 .setAddress(serverAddress)
                 .build();
     
-            stub.withDeadlineAfter(TIMEOUT, TimeUnit.MILLISECONDS).register(request);
+            stub.withDeadlineAfter(SHORT_TIMEOUT, TimeUnit.MILLISECONDS).register(request);
         } catch (StatusRuntimeException e) {
             throw new ServerRegistrationFailedException(serverAddress, serverQualifier, serviceName, e);
         }
@@ -49,7 +49,7 @@ public class NamingServiceClient {
             .build();
             
         LookupResponse response = stub
-            .withDeadlineAfter(TIMEOUT, TimeUnit.MILLISECONDS)
+            .withDeadlineAfter(SHORT_TIMEOUT, TimeUnit.MILLISECONDS)
             .lookup(request);
 
         return response.getServicesList();
@@ -64,7 +64,7 @@ public class NamingServiceClient {
                 .setAddress(serverTarget)
                 .build();
     
-            stub.withDeadlineAfter(TIMEOUT, TimeUnit.MILLISECONDS).remove(request);
+            stub.withDeadlineAfter(SHORT_TIMEOUT, TimeUnit.MILLISECONDS).remove(request);
         } catch (StatusRuntimeException e) {
             throw new ServerUnregistrationFailedException(serverTarget, serviceName, e);
         }
@@ -74,7 +74,7 @@ public class NamingServiceClient {
         GetClientIdRequest request = GetClientIdRequest.newBuilder().build();
 
         GetClientIdResponse response = stub
-            .withDeadlineAfter(TIMEOUT, TimeUnit.MILLISECONDS)
+            .withDeadlineAfter(SHORT_TIMEOUT, TimeUnit.MILLISECONDS)
             .getClientId(request);
 
         return response.getClientId();

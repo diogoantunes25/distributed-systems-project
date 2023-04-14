@@ -14,7 +14,8 @@ import pt.tecnico.distledger.namingserver.grpc.NamingServiceClient;
 import pt.tecnico.distledger.namingserver.NamingServer;
 
 public abstract class Service {
-    protected final static int TIMEOUT = 5000; // milliseconds
+    protected final static int SHORT_TIMEOUT = 5000; // 5 milliseconds
+    protected final static int LONG_TIMEOUT = 5000 * 60; // 5 minutes
     
     // Caches ManagedChannel for qualifier
     protected final Map<String, ManagedChannel> serverCache = new HashMap<>();
