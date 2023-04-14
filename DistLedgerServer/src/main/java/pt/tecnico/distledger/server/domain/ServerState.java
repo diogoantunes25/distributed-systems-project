@@ -1,6 +1,5 @@
 package pt.tecnico.distledger.server.domain;
 
-import java.sql.Time;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Condition;
@@ -248,7 +247,8 @@ public class ServerState {
             // Add operations not yet executed
             ledger.addAll(ops.stream()
                 .filter(op -> !Timestamp.lessOrEqual(op.getTs(), replicaTS))
-                .collect(Collectors.toList()));
+                .collect(Collectors.toList())
+            );
 
             replicaTS.merge(otherTS);
 
