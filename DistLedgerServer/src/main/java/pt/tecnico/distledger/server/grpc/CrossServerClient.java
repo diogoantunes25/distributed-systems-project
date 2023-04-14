@@ -63,7 +63,16 @@ public class CrossServerClient {
         if (replicas.isEmpty()) throw new NoReplicasException();
 
         clearCache();
-        for (String replica : replicas) cache.put(replica, ManagedChannelBuilder.forTarget(replica).usePlaintext().build());
+        for (String replica : replicas) {
+            ManagedChannel old = cache.put(replica, ManagedChannelBuilder.forTarget(replica).usePlaintext().build());
+            if (old != null) {
+                try {
+                    old.shutdown();
+                } catch(Exception e) {
+                    System.out.println("Channel shutdown failed");
+                }
+            }
+        }
     }
 
     public synchronized void propagateState() throws NoReplicasException, CannotGossipException {
