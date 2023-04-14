@@ -219,16 +219,20 @@ public class ServerState {
             ledger.add(op);
 
             if (canExecute(op.getPrev())) {
-                op.accept(updateVisitor);
-                op.setStable();
-                condition.signalAll();
-
-                valueTS.merge(op.getTs());
-
-                executed.add(op.getUid());
-
-                // I am the smallest stable
-                if (ledger.size() - 1 == minStable) minStable++;
+                try {
+                    op.accept(updateVisitor);
+                    op.setStable();
+                    condition.signalAll();
+    
+                    valueTS.merge(op.getTs());
+    
+                    executed.add(op.getUid());
+    
+                    // I am the smallest stable
+                    if (ledger.size() - 1 == minStable) minStable++;
+                } catch (InvalidLedgerException e) {
+                    System.out.printf("[ServerState] Invalid ledger: %s\n", e.getMessage());
+                }
             }
 
             return ts;
@@ -259,10 +263,14 @@ public class ServerState {
                     .sorted((o1, o2) -> timestampComparator.compare(o1.getPrev(), o2.getPrev())) // sort by prev
                     .forEach(op -> {
                         if (canExecute(op.getPrev())) {
-                            op.accept(updateVisitor);
-                            op.setStable();
-                            valueTS.merge(op.getTs());
-                            executed.add(op.getUid());
+                            try {
+                                op.accept(updateVisitor);
+                                op.setStable();
+                                valueTS.merge(op.getTs());
+                                executed.add(op.getUid());
+                            } catch (InvalidLedgerException e) {
+                                System.out.printf("[ServerState] Invalid ledger: %s\n", e.getMessage());
+                            }
                         }
                     });
 
