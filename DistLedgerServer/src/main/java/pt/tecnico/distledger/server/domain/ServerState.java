@@ -57,8 +57,8 @@ public class ServerState {
         return valueTS;
     }
 
-    public boolean isStable(Timestamp t) {
-        System.out.printf("[ServerStats] isStable ? %s\n", Timestamp.lessOrEqual(t, valueTS));
+    public boolean canExecute(Timestamp t) {
+        System.out.printf("[ServerStats] canExecute ? %s\n", Timestamp.lessOrEqual(t, valueTS));
         System.out.println("Timestamp");
         System.out.println(t);
         System.out.println("valueTS");
@@ -162,7 +162,7 @@ public class ServerState {
     private <T> Read<T> read(ReadOp op) throws InterruptedException {
         try {
             lock.lock();
-            while(!isStable(op.getPrev())){
+            while(!canExecute(op.getPrev())){
                 condition.await();
             }
             Visitor<T> visitor = new ExecutorVisitor<>(this);
@@ -218,7 +218,7 @@ public class ServerState {
             op.setTs(ts);
             ledger.add(op);
 
-            if (isStable(op.getPrev())) {
+            if (canExecute(op.getPrev())) {
                 op.accept(updateVisitor);
                 op.setStable();
                 condition.signalAll();
@@ -258,7 +258,7 @@ public class ServerState {
                     .filter(op -> !op.isStable()) // get operations that are now stable (but weren't)
                     .sorted((o1, o2) -> timestampComparator.compare(o1.getPrev(), o2.getPrev())) // sort by prev
                     .forEach(op -> {
-                        if (isStable(op.getPrev())) {
+                        if (canExecute(op.getPrev())) {
                             op.accept(updateVisitor);
                             op.setStable();
                             valueTS.merge(op.getTs());
