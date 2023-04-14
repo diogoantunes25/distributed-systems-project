@@ -17,14 +17,13 @@ import pt.tecnico.distledger.server.visitor.Visitor;
 public class ServerState {
     volatile private String target;
     volatile private List<UpdateOp> ledger;
-    volatile private int minStable;
+    volatile private int minStable; // index of first non-stable operation in ledger
     volatile private AtomicBoolean active;
     volatile private Map<String, Account> accounts;
     volatile private Timestamp replicaTS;
     volatile private Timestamp valueTS;
     private ReentrantLock lock;
     private Condition condition;
-    private Thread worker;
     private ExecutorVisitor<Void> updateVisitor = new ExecutorVisitor<>(this);
     private Set<UpdateId> executed = new HashSet<>();
 
@@ -59,6 +58,11 @@ public class ServerState {
     }
 
     public boolean isStable(Timestamp t) {
+        System.out.printf("[ServerStats] isStable ? %s\n", Timestamp.lessOrEqual(t, valueTS));
+        System.out.println("Timestamp");
+        System.out.println(t);
+        System.out.println("valueTS");
+        System.out.println(valueTS);
         return Timestamp.lessOrEqual(t, valueTS);
     }
 
@@ -77,18 +81,13 @@ public class ServerState {
     public Timestamp createAccount(UpdateId updateId, String account, Timestamp prev)
             throws ServerUnavailableException, OperationAlreadyExecutedException {
         assertIsActive();
-        Timestamp ts = replicaTS.increaseAndGetCopy(target);
-        clientUpdate(new CreateOp(prev, updateId, account));
-
-        return ts;
+        return clientUpdate(new CreateOp(prev, updateId, account));
     }
 
     public Timestamp transferTo(UpdateId updateId, String accountFrom, String accountTo, int amount, Timestamp prev)
             throws ServerUnavailableException, OperationAlreadyExecutedException {
         assertIsActive();
-        Timestamp ts = replicaTS.increaseAndGetCopy(target);
-        clientUpdate(new TransferOp(prev, updateId, accountFrom, accountTo, amount));
-        return ts;
+        return clientUpdate(new TransferOp(prev, updateId, accountFrom, accountTo, amount));
     }
 
     public Read<Integer> getBalance(String userId, Timestamp prev)
@@ -211,6 +210,8 @@ public class ServerState {
             if (executed.contains(op.getUid())) throw new OperationAlreadyExecutedException(op.getUid());
 
             System.out.printf("[ServerState] update %s added to log\n", op.getUid().getUid());
+            System.out.println("Prev is");
+            System.out.println(op.getPrev());
 
             replicaTS.increase(this.target);
             Timestamp ts = op.getPrev().getCopy().set(target, replicaTS.getTime(target));
@@ -225,6 +226,9 @@ public class ServerState {
                 valueTS.merge(op.getTs());
 
                 executed.add(op.getUid());
+
+                // I am the smallest stable
+                if (ledger.size() - 1 == minStable) minStable++;
             }
 
             return ts;
@@ -236,23 +240,34 @@ public class ServerState {
     public void gossip(Timestamp otherTS, List<UpdateOp> ops) {
         try {
             lock.lock();
-            replicaTS.merge(otherTS);
+            System.out.println("ReplicaTS");
+            System.out.println(replicaTS);
+            System.out.println(ops.get(0).getTs());
 
             // Add operations not yet executed
             ledger.addAll(ops.stream()
-                .filter(op -> !Timestamp.lessOrEqual(op.getTs(), otherTS))
+                .filter(op -> !Timestamp.lessOrEqual(op.getTs(), replicaTS))
                 .collect(Collectors.toList()));
 
+            replicaTS.merge(otherTS);
+
             Comparator<Timestamp> timestampComparator = Timestamp.getTotalOrderPrevComparator();
+            System.out.printf("[ServerState] ledger has now %s operations (received %s)\n", ledger.size(), ops.size());
             ledger.stream()
-                    .filter(op -> !op.isStable() && isStable(op.getPrev())) // get operations that are now stable (but weren't)
+                    .skip(minStable) // No need to look at stable operations
+                    .filter(op -> !op.isStable()) // get operations that are now stable (but weren't)
                     .sorted((o1, o2) -> timestampComparator.compare(o1.getPrev(), o2.getPrev())) // sort by prev
                     .forEach(op -> {
-                        op.accept(updateVisitor);
-                        op.setStable();
-                        valueTS.merge(op.getTs());
-                        executed.add(op.getUid());
+                        if (isStable(op.getPrev())) {
+                            op.accept(updateVisitor);
+                            op.setStable();
+                            valueTS.merge(op.getTs());
+                            executed.add(op.getUid());
+                        }
                     });
+
+            // Update minStable
+            for (int i = minStable; i < ledger.size() && ledger.get(i).isStable(); i++, minStable++);
 
             condition.signalAll();
         } finally {

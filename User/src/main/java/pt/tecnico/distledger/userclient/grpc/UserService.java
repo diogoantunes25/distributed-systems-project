@@ -77,17 +77,20 @@ public class UserService extends Service {
     private void tryGetBalance(String server, String username) 
             throws ServerUnavailableException {
         ManagedChannel channel = getServerChannel(server);
+        System.out.printf("Got channel for %s\n", server);
         
         try{
             UserServiceGrpc.UserServiceBlockingStub stub = UserServiceGrpc
                 .newBlockingStub(channel);
-            
+            System.out.printf("Got stub for %s\n", server);
+
             BalanceRequest request = BalanceRequest.newBuilder()
                                                    .setUserId(username)
                                                    .setPrev(ts.toGrpc())
                                                    .build();
 
             // long timeout is needed because read operations block until stable
+            System.out.printf("Sending request\n", server);
             BalanceResponse response = stub
                 .withDeadlineAfter(LONG_TIMEOUT, TimeUnit.MILLISECONDS)
                 .balance(request);

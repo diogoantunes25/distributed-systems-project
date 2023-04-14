@@ -16,7 +16,7 @@ public class CreateOp extends UpdateOp {
 
     @Override
     public UpdateOp getCopy() {
-        return new CreateOp(getPrev(), getUid(), getAccount());
+        return new CreateOp(getPrev(), getTs(), getUid(), getAccount());
     }
 
     public <T> T accept(Visitor<T> visitor) {

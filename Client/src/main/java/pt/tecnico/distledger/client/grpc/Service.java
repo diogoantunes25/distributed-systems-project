@@ -41,7 +41,7 @@ public abstract class Service {
     }
 
     protected void cacheRefresh(String qualifier) throws ServerLookupFailedException {
-        System.out.printf("[Service] refreshing cache\n");
+        System.out.printf("[Service] refreshing cache for %s\n", qualifier);
         List<String> servers = this.namingServiceClient
             .lookup(NamingServer.SERVICE_NAME, qualifier);
 

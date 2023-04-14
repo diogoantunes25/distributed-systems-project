@@ -137,4 +137,13 @@ public class Timestamp {
             return 0;
         };
     }
+
+    @Override
+    public String toString() {
+        String ans = new String();
+        for (Map.Entry<String, Integer> entry : times.entrySet()) {
+            ans += entry.getKey() + ":" + entry.getValue().toString();
+        }
+        return ans;
+    }
 }

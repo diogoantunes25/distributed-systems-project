@@ -28,4 +28,3 @@ Nomeadamente, se uma réplica se registar com um qualificador que já tinha sido
 
 // TODO: testar se leitura bloqueia
 // TODO: implementar table?
-// TODO: mandar apenas updates que outro não tem?
