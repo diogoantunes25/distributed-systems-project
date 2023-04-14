@@ -98,9 +98,13 @@ public class ServerState {
     }
 
     public Read<Integer> getBalance(String userId, Timestamp prev)
-            throws ServerUnavailableException {
+            throws ServerUnavailableException, RuntimeException {
         assertIsActive();
-        return read(new GetBalanceOp(prev, userId));
+        try {
+            return read(new GetBalanceOp(prev, userId));
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public void activate() {
@@ -115,9 +119,14 @@ public class ServerState {
         return accounts;
     }
 
-    public Read<List<UpdateOp>> getLedgerState(Timestamp prev) {
+    public Read<List<UpdateOp>> getLedgerState(Timestamp prev) 
+            throws RuntimeException {
         assertIsActive();
-        return read(new GetLedgerOp(prev));
+        try {
+            return read(new GetLedgerOp(prev));
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     // Assertions
@@ -161,10 +170,16 @@ public class ServerState {
         }
     }
 
-    private <T> Read<T> read(ReadOp op) {
-        synchronized (valueTS) {
+    private <T> Read<T> read(ReadOp op) throws InterruptedException {
+        try {
+            lock.lock();
+            while(!isStable(op.getPrev())){
+                condition.await();
+            }
             Visitor<T> visitor = new ExecutorVisitor<>(this);
             return new Read<T>(op.accept(visitor), valueTS.getCopy());
+        } finally {
+            lock.unlock();
         }
     }
 
