@@ -1,7 +1,6 @@
 package pt.tecnico.distledger.server;
 
 import java.io.IOException;
-import java.util.concurrent.locks.ReentrantLock;
 
 import io.grpc.Server;
 import io.grpc.ServerBuilder;
@@ -13,6 +12,7 @@ import pt.tecnico.distledger.namingserver.NamingServer;
 
 import pt.tecnico.distledger.server.domain.ServerState;
 import pt.tecnico.distledger.server.grpc.AdminServiceImpl;
+import pt.tecnico.distledger.server.grpc.CrossServerClient;
 import pt.tecnico.distledger.server.grpc.UserServiceImpl;
 import pt.tecnico.distledger.server.grpc.CrossServerServiceImpl;
 
@@ -35,12 +35,12 @@ public class ServerMain {
         try {
             namingServiceClient.register(NamingServer.SERVICE_NAME, qual, target);
 
-            ReentrantLock lock = new ReentrantLock();
-            ServerState state = new ServerState();
+            ServerState state = new ServerState(target);
+            CrossServerClient client = new CrossServerClient(state);
             Server server = ServerBuilder.forPort(port)
-                    .addService(new AdminServiceImpl(state, lock))
-                    .addService(new UserServiceImpl(state, qual, lock))
-                    .addService(new CrossServerServiceImpl(state))
+                    .addService(new AdminServiceImpl(state, client))
+                    .addService(new UserServiceImpl(state))
+                    .addService(new CrossServerServiceImpl(state, client))
                     .build();
 
             Runtime.getRuntime().addShutdownHook(new Thread(() -> {

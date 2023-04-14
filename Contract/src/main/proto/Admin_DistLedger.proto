@@ -17,10 +17,13 @@ message GossipRequest {}
 
 message GossipResponse {}
 
-message getLedgerStateRequest {}
+message getLedgerStateRequest {
+  Timestamp prev = 1;
+}
 
 message getLedgerStateResponse {
   LedgerState ledgerState = 1;
+  Timestamp new = 2;
 }
 
 service AdminService {

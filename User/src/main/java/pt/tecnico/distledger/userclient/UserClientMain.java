@@ -17,6 +17,12 @@ public class UserClientMain {
         // receive and print arguments
         logger.info(String.format("Received %d tokens%n", args.length));
 
+        if (args.length > 1) {
+            System.err.println("Incorrect usage!");
+            System.err.println("Usage: mvn exec:java [-Dexec.args=-Ddebug]");
+            return;
+        }
+
         if (args.length == 1) {
             if (args[0].equals(("-Ddebug"))) {
                 debug_flag = true;
@@ -24,7 +30,7 @@ public class UserClientMain {
                 logger.info(String.format("Debug flag found%n"));
             } else {
                 System.err.println("Incorrect usage!");
-                System.err.println("Usage: mvn exec:java -Dexec.args=[-Ddebug]");
+                System.err.println("Usage: mvn exec:java [-Dexec.args=-Ddebug]");
             }
         }
 

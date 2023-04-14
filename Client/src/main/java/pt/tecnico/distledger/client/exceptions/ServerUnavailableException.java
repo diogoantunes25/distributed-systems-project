@@ -6,4 +6,8 @@ public class ServerUnavailableException extends Exception {
         super("Server is not available", cause);
     }
 
+    public ServerUnavailableException() {
+        this(null);
+    }
+
 }

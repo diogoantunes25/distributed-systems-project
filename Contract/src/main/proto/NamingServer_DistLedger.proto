@@ -27,9 +27,16 @@ message RemoveRequest {
 
 message RemoveResponse { }
 
+message GetClientIdRequest { }
+
+message GetClientIdResponse {
+  int64 clientId = 1;
+}
+
 service NamingService {
   rpc register(RegisterRequest) returns (RegisterResponse);
   rpc lookup(LookupRequest) returns (LookupResponse);
   rpc remove(RemoveRequest) returns (RemoveResponse);
+  rpc getClientId(GetClientIdRequest) returns (GetClientIdResponse);
 }
 

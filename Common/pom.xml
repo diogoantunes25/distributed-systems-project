@@ -5,7 +5,7 @@
 	<!-- http://maven.apache.org/pom.html#Quick_Overview -->
 
 	<groupId>pt.tecnico.sdis.2023.A09</groupId>
-	<artifactId>User</artifactId>
+	<artifactId>Common</artifactId>
 	<version>1.0.0-SNAPSHOT</version>
 	<packaging>jar</packaging>
 	<name>${project.artifactId}</name>
@@ -19,37 +19,12 @@
 		
 		<version.maven-compiler-plugin>3.8.1</version.maven-compiler-plugin>
 		<version.exec-maven-plugin>3.0.0</version.exec-maven-plugin>
-
-		<mainclass>pt.tecnico.distledger.userclient.UserClientMain</mainclass>
-		<server.host>localhost</server.host>
-		<server.port>2001</server.port>
-
 	</properties>
 
-	<!-- Dependencies are code archives - JARs - 
-		on which your current module needs in order to compile, build, test, and/or to run. 
-		When you execute a goal, these dependencies are resolved, and 
-		are then loaded from the local repository. -->
 	<dependencies>
-		<!-- contract brings gRPC dependencies with it -->
 		<dependency>
 			<groupId>pt.tecnico.sdis.2023.A09</groupId>
 			<artifactId>Contract</artifactId>
-			<version>1.0.0-SNAPSHOT</version>
-		</dependency>
-		<dependency>
-			<groupId>pt.tecnico.sdis.2023.A09</groupId>
-			<artifactId>Client</artifactId>
-			<version>1.0.0-SNAPSHOT</version>
-		</dependency>
-		<dependency>
-			<groupId>pt.tecnico.sdis.2023.A09</groupId>
-			<artifactId>NamingServer</artifactId>
-			<version>1.0.0-SNAPSHOT</version>
-		</dependency>
-		<dependency>
-			<groupId>pt.tecnico.sdis.2023.A09</groupId>
-			<artifactId>Common</artifactId>
 			<version>1.0.0-SNAPSHOT</version>
 		</dependency>
 	</dependencies>
@@ -67,22 +42,6 @@
 				<configuration>
 					<source>${version.java}</source>
 					<target>${version.java}</target>
-				</configuration>
-			</plugin>
-			<!-- Plugin that provides two goals to execute system and Java programs -->
-			<plugin>
-				<groupId>org.codehaus.mojo</groupId>
-				<artifactId>exec-maven-plugin</artifactId>
-				<version>${version.exec-maven-plugin}</version>
-				<executions>
-					<execution>
-						<goals>
-							<goal>java</goal>
-						</goals>
-					</execution>
-				</executions>
-				<configuration>
-					<mainClass>${mainclass}</mainClass>
 				</configuration>
 			</plugin>
 		</plugins>

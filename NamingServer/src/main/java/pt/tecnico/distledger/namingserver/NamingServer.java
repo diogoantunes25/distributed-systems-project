@@ -5,7 +5,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
+import java.util.concurrent.atomic.AtomicLong;
 
 import io.grpc.Server;
 import io.grpc.ServerBuilder;
@@ -17,10 +17,9 @@ import pt.tecnico.distledger.namingserver.grpc.NamingServerServiceImpl;
 public class NamingServer {
 
     public final static String SERVICE_NAME = "DistLedger";
-    public final static String PRIMARY_QUAL = "A";
-    public final static String SECONDARY_QUAL = "B";
 
     private Map<String, ServiceEntry> services = new HashMap<String, ServiceEntry>();
+    private AtomicLong clientId = new AtomicLong(0);
 
     public static void main(String[] args) throws InterruptedException, IOException {
         if (args.length < 1) {
@@ -76,15 +75,20 @@ public class NamingServer {
     }
 
     public List<ServerEntry> lookup(String serviceName, String qualifier) {
+        System.out.printf("[NamingServer] looking %s with qual %s\n", serviceName, qualifier);
         ServiceEntry service = services.get(serviceName);
         if (service == null) {
             return new LinkedList<ServerEntry>();
         }
 
         if (qualifier.length() == 0) {
-            return service.getServers().stream().collect(Collectors.toList());
+            return service.getServers();
         }
 
-        return services.get(serviceName).getServers(qualifier);
+        return service.getServers(qualifier);
+    }
+
+    public long getClientId() {
+        return clientId.incrementAndGet();
     }
 }

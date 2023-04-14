@@ -2,7 +2,6 @@ package pt.tecnico.distledger.adminclient;
 
 import pt.tecnico.distledger.namingserver.NamingServer;
 
-import pt.tecnico.distledger.client.exceptions.InvalidQualifierException;
 import pt.tecnico.distledger.client.exceptions.ServerLookupFailedException;
 import pt.tecnico.distledger.client.exceptions.ServerUnavailableException;
 import pt.tecnico.distledger.adminclient.grpc.AdminService;
@@ -32,14 +31,8 @@ public class CommandParser {
     }
 
     private void debug(String debugMessage) {
-		if (DEBUG_FLAG)
-			System.err.println(debugMessage);
-	}
-
-    private void assertValidQualifier(String qual) throws InvalidQualifierException {
-        if (!qual.equals(NamingServer.PRIMARY_QUAL) && !qual.equals(NamingServer.SECONDARY_QUAL)) {
-            throw new InvalidQualifierException(qual);
-        }
+        if (DEBUG_FLAG)
+            System.err.println(debugMessage);
     }
 
     void parseInput() {
@@ -83,10 +76,8 @@ public class CommandParser {
                         break;
                 }
 
-            } catch (InvalidQualifierException e) {
-                System.out.println(String.format("Qualifier '%s' is invalid - must be '%s' or '%s'.", e.getQual(), NamingServer.PRIMARY_QUAL, NamingServer.SECONDARY_QUAL));
             } catch (ServerUnavailableException e) {
-                System.out.println(String.format("Server is currently unavailable. For writes, you can use the other server."));
+                System.out.println(String.format("Server is currently unavailable."));
             } catch (ServerLookupFailedException e) {
                 System.out.println(String.format("Can't find any server with provided qualifier for service '%s'", NamingServer.SERVICE_NAME));
             } catch (Exception e) {
@@ -99,7 +90,8 @@ public class CommandParser {
         this.adminService.delete();
     }
 
-    private void activate(String line) throws InvalidQualifierException, ServerLookupFailedException, ServerUnavailableException {
+    private void activate(String line) 
+            throws ServerLookupFailedException, ServerUnavailableException {
         String[] split = line.split(SPACE);
 
         if (split.length != 2){
@@ -107,15 +99,14 @@ public class CommandParser {
             return;
         }
         String server = split[1];
-
-        assertValidQualifier(server);
 
         debug("Server: " + server);
 
         this.adminService.activate(server);
     }
 
-    private void deactivate(String line) throws InvalidQualifierException, ServerLookupFailedException, ServerUnavailableException {
+    private void deactivate(String line) 
+            throws ServerLookupFailedException, ServerUnavailableException {
         String[] split = line.split(SPACE);
 
         if (split.length != 2){
@@ -123,15 +114,14 @@ public class CommandParser {
             return;
         }
         String server = split[1];
-
-        assertValidQualifier(server);
 
         debug("Server: " + server);
 
         this.adminService.deactivate(server);
     }
 
-    private void dump(String line) throws ServerLookupFailedException, ServerUnavailableException, InvalidQualifierException {
+    private void dump(String line) 
+            throws ServerLookupFailedException, ServerUnavailableException {
         String[] split = line.split(SPACE);
 
         if (split.length != 2){
@@ -140,18 +130,29 @@ public class CommandParser {
         }
         String server = split[1];
 
-        assertValidQualifier(server);
-
         debug("Server: " + server);
 
         this.adminService.getLedgerState(server);
     }
 
-    @SuppressWarnings("unused")
-    private void gossip(String line){
-        /* TODO Phase-3 */
-        System.out.println("TODO: implement gossip command (only for Phase-3)");
+    private void gossip(String line) 
+            throws ServerLookupFailedException, ServerUnavailableException {
+
+        System.out.printf("[CommandParser] gossip command found (line=%s)\n", line);
+
+        String[] split = line.split(SPACE);
+
+        if (split.length != 2){
+            this.printUsage();
+            return;
+        }
+        String server = split[1];
+
+        debug("Server: " + server);
+
+        this.adminService.gossip(server);
     }
+
     private void printUsage() {
         System.out.println("Usage:\n" +
                 "- activate <server>\n" +
