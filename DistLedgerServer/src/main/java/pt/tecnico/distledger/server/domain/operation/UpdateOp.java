@@ -11,11 +11,14 @@ public abstract class UpdateOp extends Operation {
     private AtomicBoolean stable;
     private Timestamp ts;
 
-    public UpdateOp(Timestamp prev, Timestamp ts, UpdateId uid, String fromAccount) {
+    public UpdateOp(Timestamp prev, UpdateId uid, String fromAccount) {
         super(prev);
         this.account = fromAccount;
         this.uid = uid;
         this.stable = new AtomicBoolean();
+    }
+
+    public void setTs(Timestamp ts) {
         this.ts = ts;
     }
 

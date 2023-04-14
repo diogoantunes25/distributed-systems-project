@@ -9,9 +9,13 @@ public class TransferOp extends UpdateOp {
     private int amount;
 
     public TransferOp(Timestamp prev, Timestamp ts, UpdateId uid, String fromAccount, String destAccount, int amount) {
-        super(prev, ts, uid, fromAccount);
+        super(prev, uid, fromAccount);
         this.destAccount = destAccount;
         this.amount = amount;
+        setTs(ts);
+    }
+    public TransferOp(Timestamp prev, UpdateId uid, String fromAccount, String destAccount, int amount) {
+        this(prev, null, uid, fromAccount, destAccount, amount);
     }
 
     public String getDestAccount() {

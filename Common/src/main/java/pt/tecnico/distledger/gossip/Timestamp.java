@@ -60,6 +60,10 @@ public class Timestamp {
         return new Timestamp(copy);
     }
 
+    public synchronized void increase(String target) {
+        this.set(target, this.getTime(target)+1);
+    }
+
     public synchronized Timestamp increaseAndGetCopy(String target) {
         return this.set(target, this.getTime(target)+1).getCopy();
     }

@@ -56,7 +56,7 @@ public class CrossServerServiceImpl extends DistLedgerCrossServerServiceGrpc.Dis
 
 
         System.out.printf("[CrossServerServiceImpl] merging log of size %s\n", receivedOps.size());
-        state.mergeLog(receivedOps, Timestamp.fromGrpc(request.getReplicaTS()));
+        state.gossip(Timestamp.fromGrpc(request.getReplicaTS()), receivedOps);
 
         responseStreamObserver.onNext(PropagateStateResponse.newBuilder().build());
         responseStreamObserver.onCompleted();

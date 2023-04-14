@@ -1,9 +1,11 @@
 package pt.tecnico.distledger.server.domain;
 
+import java.sql.Time;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.stream.Collectors;
 
 import pt.tecnico.distledger.gossip.Timestamp;
 import pt.tecnico.distledger.server.domain.exceptions.*;
@@ -23,6 +25,8 @@ public class ServerState {
     private ReentrantLock lock;
     private Condition condition;
     private Thread worker;
+    private ExecutorVisitor<Void> updateVisitor = new ExecutorVisitor<>(this);
+    private Set<UpdateId> executed = new HashSet<>();
 
     public ServerState(String target) {
         this.target = target;
@@ -36,16 +40,6 @@ public class ServerState {
         // Lock for the ledger
         this.lock = new ReentrantLock();
         this.condition = lock.newCondition();
-
-        // Single thread looping over the updates, trying to execute them
-        this.worker = new Thread(() -> {
-            try {
-                tryProgress();
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            }
-        });
-        this.worker.start();
 
         this.accounts = new HashMap<>();
         Account broker = Account.getBroker();
@@ -84,7 +78,7 @@ public class ServerState {
             throws ServerUnavailableException, OperationAlreadyExecutedException {
         assertIsActive();
         Timestamp ts = replicaTS.increaseAndGetCopy(target);
-        addUpdate(new CreateOp(prev, prev.getCopy().set(target, ts.getTime(target)), updateId, account));
+        clientUpdate(new CreateOp(prev, updateId, account));
 
         return ts;
     }
@@ -93,7 +87,7 @@ public class ServerState {
             throws ServerUnavailableException, OperationAlreadyExecutedException {
         assertIsActive();
         Timestamp ts = replicaTS.increaseAndGetCopy(target);
-        addUpdate(new TransferOp(prev, prev.getCopy().set(target, ts.getTime(target)), updateId, accountFrom, accountTo, amount));
+        clientUpdate(new TransferOp(prev, updateId, accountFrom, accountTo, amount));
         return ts;
     }
 
@@ -115,11 +109,7 @@ public class ServerState {
         active.set(false);
     }
 
-    public Map<String, Account> getAccounts() {
-        return accounts;
-    }
-
-    public Read<List<UpdateOp>> getLedgerState(Timestamp prev) 
+    public Read<List<UpdateOp>> getLedgerState(Timestamp prev)
             throws RuntimeException {
         assertIsActive();
         try {
@@ -183,64 +173,6 @@ public class ServerState {
         }
     }
 
-    // Only one thread executes this function
-    private void tryProgress() throws InterruptedException {
-
-        Visitor<Void> visitor = new ExecutorVisitor<>(this);
-        try {
-            int ledgerSize = ledger.size();
-            while (true) {
-                boolean updated = false;
-                for (int i = minStable; i < ledgerSize; i++) {
-                    UpdateOp op = ledger.get(i);
-
-                    // Check if op was already stable
-                    if (op.isStable()) {
-                        System.out.printf("[ServerState] update %s was already stable, skipping\n", op.getUid().getUid());
-                        if (i == minStable) minStable++;
-                        continue;
-                    }
-
-                    // Check if op is still not stable
-                    if (!isStable(op.getPrev())) {
-                        System.out.printf("[ServerState] update %s is not stable, skipping\n", op.getUid().getUid());
-                        continue;
-                    }
-
-                    // op has recently turned stable, execute it
-                    System.out.printf("[ServerState] Update %s is now stable, running.\n", op.getUid().getUid());
-                    op.setStable();
-
-                    synchronized (valueTS) {
-                        try {
-                            op.accept(visitor);
-                        } catch (DistLedgerRuntimeException e) {
-                            System.out.println("Found invalid operation");
-                        } finally {
-                            this.valueTS.merge(op.getTs());
-                            updated = true;
-                            if (i == minStable) minStable++;
-                        }
-                    }
-                }
-
-                if (updated) continue;
-
-                lock.lock();
-                while (ledgerSize == ledger.size()) {
-                    condition.await();
-                    System.out.printf("[ServerState] await interrupted\n");
-                }
-                System.out.printf("[ServerState] conditions changed, moving on\n");
-                ledgerSize = ledger.size();
-                lock.unlock();
-            }
-        } finally {
-            if (lock.isLocked()) lock.unlock();
-        }
-
-    }
-
     public void _createAccount(String userId)
             throws AccountAlreadyExistsException, ServerUnavailableException {
         assertCanCreateAccount(userId);
@@ -272,50 +204,60 @@ public class ServerState {
         return ledgerCopy;
     }
 
-    private boolean executed(UpdateOp op) {
-        for (UpdateOp operation: ledger) 
-            if (operation.getUid().equals(op.getUid())) return true;
-        return false;
-    }
-
     // Returns new replica TS
-    public void addUpdate(UpdateOp op) throws OperationAlreadyExecutedException {
-        if (executed(op)) throw new OperationAlreadyExecutedException(op.getUid());
-
+    private Timestamp clientUpdate(UpdateOp op) throws OperationAlreadyExecutedException {
         try {
             lock.lock();
+            if (executed.contains(op.getUid())) throw new OperationAlreadyExecutedException(op.getUid());
+
             System.out.printf("[ServerState] update %s added to log\n", op.getUid().getUid());
+
+            replicaTS.increase(this.target);
+            Timestamp ts = op.getPrev().getCopy().set(target, replicaTS.getTime(target));
+            op.setTs(ts);
             ledger.add(op);
-            condition.signal();
+
+            if (isStable(op.getPrev())) {
+                op.accept(updateVisitor);
+                op.setStable();
+                condition.signalAll();
+
+                valueTS.merge(op.getTs());
+
+                executed.add(op.getUid());
+            }
+
+            return ts;
         } finally {
             lock.unlock();
         }
     }
 
-    /**
-     * Merges log from other replica into current log
-     * @param log incoming log
-     * @param peerTS incoming timestamp
-     */
-    public void mergeLog(List<UpdateOp> log, Timestamp peerTS) {
+    public void gossip(Timestamp otherTS, List<UpdateOp> ops) {
         try {
             lock.lock();
-            log.stream().filter(op -> !Timestamp.lessOrEqual(op.getTs(), replicaTS)) // Remove ops already in log
-                    .sorted(((o1, o2) ->
-                        Timestamp.getTotalOrderPrevComparator().compare(o1.getPrev(), o2.getPrev())
-                    )) // Sort by prev value
-                    .forEach(op1 -> {
-                        try {
-                            addUpdate(op1);
-                        } catch (OperationAlreadyExecutedException e) {}
-                    }); // If ops are put consecutively into ledger sorted, they will be executed respecting the partial order
+            replicaTS.merge(otherTS);
 
-            replicaTS.merge(peerTS);
-            condition.signal();
+            // Add operations not yet executed
+            ledger.addAll(ops.stream()
+                .filter(op -> !Timestamp.lessOrEqual(op.getTs(), otherTS))
+                .collect(Collectors.toList()));
+
+            Comparator<Timestamp> timestampComparator = Timestamp.getTotalOrderPrevComparator();
+            ledger.stream()
+                    .filter(op -> !op.isStable() && isStable(op.getPrev())) // get operations that are now stable (but weren't)
+                    .sorted((o1, o2) -> timestampComparator.compare(o1.getPrev(), o2.getPrev())) // sort by prev
+                    .forEach(op -> {
+                        op.accept(updateVisitor);
+                        op.setStable();
+                        valueTS.merge(op.getTs());
+                        executed.add(op.getUid());
+                    });
+
+            condition.signalAll();
         } finally {
             lock.unlock();
         }
-
     }
 
     public class Read<T> {

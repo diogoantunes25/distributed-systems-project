@@ -6,12 +6,17 @@ import pt.tecnico.distledger.server.visitor.Visitor;
 
 public class CreateOp extends UpdateOp {
     public CreateOp(Timestamp prev, Timestamp ts, UpdateId uid, String account) {
-        super(prev, ts, uid, account);
+        super(prev, uid, account);
+        setTs(ts);
+    }
+
+    public CreateOp(Timestamp prev, UpdateId uid, String account) {
+        this(prev, null, uid, account);
     }
 
     @Override
     public UpdateOp getCopy() {
-        return new CreateOp(getPrev(), getTs(), getUid(), getAccount());
+        return new CreateOp(getPrev(), getUid(), getAccount());
     }
 
     public <T> T accept(Visitor<T> visitor) {
