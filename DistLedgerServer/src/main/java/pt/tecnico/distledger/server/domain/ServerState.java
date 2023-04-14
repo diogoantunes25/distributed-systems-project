@@ -197,6 +197,7 @@ public class ServerState {
                     // Check if op was already stable
                     if (op.isStable()) {
                         System.out.printf("[ServerState] update %s was already stable, skipping\n", op.getUid().getUid());
+                        if (i == minStable) minStable++;
                         continue;
                     }
 
