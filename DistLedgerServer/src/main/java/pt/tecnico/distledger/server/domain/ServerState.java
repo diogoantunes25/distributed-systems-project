@@ -240,7 +240,10 @@ public class ServerState {
         }
     }
 
-    public void gossip(Timestamp otherTS, List<UpdateOp> ops) {
+    public void gossip(Timestamp otherTS, List<UpdateOp> ops) 
+            throws ServerUnavailableException {
+        assertIsActive();
+
         try {
             lock.lock();
 

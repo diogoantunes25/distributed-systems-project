@@ -12,13 +12,15 @@ import pt.ulisboa.tecnico.distledger.contract.distledgerserver.CrossServerDistLe
 import pt.ulisboa.tecnico.distledger.contract.distledgerserver.DistLedgerCrossServerServiceGrpc;
 
 import pt.tecnico.distledger.server.domain.UpdateId;
+import pt.tecnico.distledger.server.domain.exceptions.ServerUnavailableException;
 import pt.tecnico.distledger.gossip.Timestamp;
 import pt.tecnico.distledger.server.domain.ServerState;
 
 public class CrossServerServiceImpl extends DistLedgerCrossServerServiceGrpc.DistLedgerCrossServerServiceImplBase {
 
     final String INVALID_LEDGER_STATE = "Ledger State Contains Invalid Operations";
-    final String NO_REPLICAS = "No replicas found.";
+    final String NO_REPLICAS = "No Replicas Found.";
+    final String SERVER_UNAVAILABLE = "Server Unavailable.";
 
     private ServerState state;
     private CrossServerClient crossServerClient;
@@ -71,9 +73,13 @@ public class CrossServerServiceImpl extends DistLedgerCrossServerServiceGrpc.Dis
 
 
         System.out.printf("[CrossServerServiceImpl] merging log of size %s\n", receivedOps.size());
-        state.gossip(Timestamp.fromGrpc(request.getReplicaTS()), receivedOps);
-
-        responseStreamObserver.onNext(PropagateStateResponse.newBuilder().build());
-        responseStreamObserver.onCompleted();
+        try {
+            state.gossip(Timestamp.fromGrpc(request.getReplicaTS()), receivedOps);
+    
+            responseStreamObserver.onNext(PropagateStateResponse.newBuilder().build());
+            responseStreamObserver.onCompleted();
+        } catch (ServerUnavailableException e) {
+            responseStreamObserver.onError(Status.UNAVAILABLE.withDescription(SERVER_UNAVAILABLE).asRuntimeException());
+        }
     }
 }
