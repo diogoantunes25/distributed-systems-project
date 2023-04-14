@@ -7,6 +7,7 @@ import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
 
 import pt.tecnico.distledger.server.domain.operation.*;
+import pt.tecnico.distledger.server.exceptions.NoReplicasException;
 import pt.ulisboa.tecnico.distledger.contract.distledgerserver.CrossServerDistLedger.*;
 import pt.ulisboa.tecnico.distledger.contract.distledgerserver.DistLedgerCrossServerServiceGrpc;
 
@@ -17,11 +18,25 @@ import pt.tecnico.distledger.server.domain.ServerState;
 public class CrossServerServiceImpl extends DistLedgerCrossServerServiceGrpc.DistLedgerCrossServerServiceImplBase {
 
     final String INVALID_LEDGER_STATE = "Ledger State Contains Invalid Operations";
+    final String NO_REPLICAS = "No replicas found.";
 
     private ServerState state;
+    private CrossServerClient crossServerClient;
 
-    public CrossServerServiceImpl(ServerState state) {
+    public CrossServerServiceImpl(ServerState state, CrossServerClient client) {
         this.state = state;
+        this.crossServerClient = client;
+    }
+
+    @Override
+    public void invalidateCache(InvalidateServerCacheRequest request, StreamObserver<InvalidateServerCacheResponse> responseStreamObserver) {
+        try {
+            crossServerClient.cacheRefresh();
+            responseStreamObserver.onNext(InvalidateServerCacheResponse.getDefaultInstance());
+            responseStreamObserver.onCompleted();
+        } catch (NoReplicasException e) {
+            responseStreamObserver.onError(Status.CANCELLED.withDescription(NO_REPLICAS).asRuntimeException());
+        }
     }
 
     @Override

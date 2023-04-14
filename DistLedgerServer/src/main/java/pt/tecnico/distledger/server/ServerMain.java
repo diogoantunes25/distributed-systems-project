@@ -12,6 +12,7 @@ import pt.tecnico.distledger.namingserver.NamingServer;
 
 import pt.tecnico.distledger.server.domain.ServerState;
 import pt.tecnico.distledger.server.grpc.AdminServiceImpl;
+import pt.tecnico.distledger.server.grpc.CrossServerClient;
 import pt.tecnico.distledger.server.grpc.UserServiceImpl;
 import pt.tecnico.distledger.server.grpc.CrossServerServiceImpl;
 
@@ -35,10 +36,11 @@ public class ServerMain {
             namingServiceClient.register(NamingServer.SERVICE_NAME, qual, target);
 
             ServerState state = new ServerState(target);
+            CrossServerClient client = new CrossServerClient(state);
             Server server = ServerBuilder.forPort(port)
-                    .addService(new AdminServiceImpl(state))
+                    .addService(new AdminServiceImpl(state, client))
                     .addService(new UserServiceImpl(state))
-                    .addService(new CrossServerServiceImpl(state))
+                    .addService(new CrossServerServiceImpl(state, client))
                     .build();
 
             Runtime.getRuntime().addShutdownHook(new Thread(() -> {

@@ -54,7 +54,7 @@ public class CrossServerClient {
         cache.clear();
     }
 
-    private void cacheRefresh() throws NoReplicasException {
+    public synchronized void cacheRefresh() throws NoReplicasException {
         List<String> replicas = namingServiceClient.lookup(NamingServer.SERVICE_NAME, "").stream()
                 .filter(r -> !r.equals(state.getTarget())).collect(Collectors.toList());
 

@@ -3,6 +3,8 @@ package pt.tecnico.distledger.namingserver.grpc;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import io.grpc.ManagedChannel;
+import io.grpc.ManagedChannelBuilder;
 import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
 
@@ -10,6 +12,9 @@ import pt.tecnico.distledger.namingserver.ServerEntry;
 import pt.tecnico.distledger.namingserver.NamingServer;
 import pt.tecnico.distledger.namingserver.exceptions.CannotRemoveException;
 import pt.tecnico.distledger.namingserver.exceptions.CannotRegisterException;
+import pt.ulisboa.tecnico.distledger.contract.distledgerserver.CrossServerDistLedger;
+import pt.ulisboa.tecnico.distledger.contract.distledgerserver.DistLedgerCrossServerServiceGrpc;
+import pt.ulisboa.tecnico.distledger.contract.distledgerserver.DistLedgerCrossServerServiceGrpc.*;
 import pt.ulisboa.tecnico.distledger.contract.distledgerserver.NamingServerDistLedger.*;
 import pt.ulisboa.tecnico.distledger.contract.distledgerserver.NamingServiceGrpc;
 
@@ -32,7 +37,25 @@ public class NamingServerServiceImpl extends NamingServiceGrpc.NamingServiceImpl
             String hostName = serverAddress.split(":")[0];
             int port = Integer.parseInt(serverAddress.split(":")[1]);
 
+            // Invalidate cache of all servers that provide serviceName
+            for (ServerEntry entry: namingServer.lookup(serviceName, "")) {
+                // Invalidation is done in background. Error is not relevant
+                new Thread(() -> {
+                    ManagedChannel channel = ManagedChannelBuilder.forAddress(entry.getHostname(), entry.getPort()).usePlaintext().build();
+                    try {
+                        DistLedgerCrossServerServiceBlockingStub stub = DistLedgerCrossServerServiceGrpc.newBlockingStub(channel);
+                        stub.invalidateCache(CrossServerDistLedger.InvalidateServerCacheRequest.getDefaultInstance());
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                        System.out.printf("Invalidate cache of %s:%s failed\n", entry.getHostname(), entry.getPort());
+                    } finally {
+                        channel.shutdown();
+                    }
+                }).start();
+            }
+
             namingServer.register(serviceName, serverQualifier, hostName, port);
+
             responseObserver.onNext(RegisterResponse.newBuilder().build());
             responseObserver.onCompleted();
         } catch (CannotRegisterException e) {

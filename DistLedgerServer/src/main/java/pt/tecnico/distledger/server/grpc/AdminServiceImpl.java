@@ -24,9 +24,9 @@ public class AdminServiceImpl extends AdminServiceGrpc.AdminServiceImplBase{
 
     private final static String CANNOT_GOSSIP = "Failed to find replica to gossip with";
 
-    public AdminServiceImpl(ServerState state) {
+    public AdminServiceImpl(ServerState state, CrossServerClient client) {
         this.state = state;
-        this.crossServerService = new CrossServerClient(state);
+        this.crossServerService = client;
     }
 
     @Override

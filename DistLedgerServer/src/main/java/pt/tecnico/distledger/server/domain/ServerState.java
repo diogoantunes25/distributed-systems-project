@@ -244,9 +244,6 @@ public class ServerState {
     public void gossip(Timestamp otherTS, List<UpdateOp> ops) {
         try {
             lock.lock();
-            System.out.println("ReplicaTS");
-            System.out.println(replicaTS);
-            System.out.println(ops.get(0).getTs());
 
             // Add operations not yet executed
             ledger.addAll(ops.stream()

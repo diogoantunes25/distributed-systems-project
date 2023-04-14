@@ -10,8 +10,13 @@ message PropagateStateRequest {
   Timestamp replicaTS = 3;
 }
 
+message InvalidateServerCacheRequest { }
+
+message InvalidateServerCacheResponse { }
+
 message PropagateStateResponse { }
 
 service DistLedgerCrossServerService {
   rpc propagateState(PropagateStateRequest) returns (PropagateStateResponse);
+  rpc invalidateCache(InvalidateServerCacheRequest) returns (InvalidateServerCacheResponse);
 }
